@@ -5,7 +5,7 @@
   "description": "像 Word 一样直接在网页上编辑 HTML",
   "permissions": ["activeTab", "storage", "downloads"],
   "action": {
-    "default_popup": "src/popup/index.html",
+    "default_popup": "popup/index.html",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
@@ -13,13 +13,12 @@
     }
   },
   "background": {
-    "service_worker": "src/background/index.ts",
-    "type": "module"
+    "service_worker": "background.js"
   },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["src/content/index.ts"],
+      "js": ["content.js"],
       "run_at": "document_idle"
     }
   ],
