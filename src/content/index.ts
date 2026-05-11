@@ -1,9 +1,11 @@
 import type { MessageType, ResponseType } from '../shared/messages';
 import type { EditorMode } from '../shared/types';
 import { ShadowHost } from './ui/ShadowHost';
+import { Engine } from './editor/Engine';
 
 let currentMode: EditorMode = 'browse';
 let shadowHost: ShadowHost | null = null;
+let engine: Engine | null = null;
 
 function enterEditMode() {
   if (currentMode === 'edit') return;
@@ -17,11 +19,17 @@ function enterEditMode() {
       shadowHost!.showFirstTimeHint();
     }
   });
+
+  engine = new Engine(shadowHost);
 }
 
 function exitEditMode() {
   if (currentMode === 'browse') return;
   currentMode = 'browse';
+
+  engine?.destroy();
+  engine = null;
+
   shadowHost?.unmount();
   shadowHost = null;
 }
