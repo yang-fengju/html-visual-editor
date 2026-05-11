@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTML Visual Editor 测试页面</title>
+  <style>
+    body { font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; }
+    h1 { color: #333; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin: 20px 0; }
+    img { max-width: 100%; }
+    table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background: #f5f5f5; }
+    pre { background: #1e1e1e; color: #d4d4d4; padding: 16px; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <h1>测试页面</h1>
+  <p>这是一个用于测试 HTML Visual Editor 的页面。</p>
+
+  <div class="card">
+    <h2>文本编辑测试</h2>
+    <p>点击这段文字应该可以直接编辑。支持<b>加粗</b>、<i>斜体</i>、<u>下划线</u>。</p>
+  </div>
+
+  <div class="card">
+    <h2>图片测试</h2>
+    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='200' fill='%23e0e0e0'%3E%3Crect width='400' height='200'/%3E%3Ctext x='200' y='105' text-anchor='middle' fill='%23999' font-size='16'%3E测试图片%3C/text%3E%3C/svg%3E" alt="测试图片">
+  </div>
+
+  <div class="card">
+    <h2>表格测试</h2>
+    <table>
+      <tr><th>姓名</th><th>年龄</th><th>城市</th></tr>
+      <tr><td>张三</td><td>25</td><td>北京</td></tr>
+      <tr><td>李四</td><td>30</td><td>上海</td></tr>
+      <tr><td>王五</td><td>28</td><td>广州</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>表单测试</h2>
+    <form>
+      <input type="text" placeholder="输入框" style="margin-right: 8px;">
+      <select><option>选项1</option><option>选项2</option></select>
+      <button type="submit" style="margin-left: 8px;">提交</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>代码块测试</h2>
+    <pre><code class="language-javascript">function hello() {
+  console.log("Hello World");
+  return 42;
+}</code></pre>
+  </div>
+
+  <div class="card">
+    <h2>多媒体测试</h2>
+    <video controls width="400" style="background: #000;">
+      <source src="" type="video/mp4">
+    </video>
+  </div>
+</body>
+</html>
