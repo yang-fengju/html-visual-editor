@@ -2,9 +2,27 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HTML Visual Editor</title>
+  <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <p>HTML Visual Editor</p>
+  <div class="popup-container">
+    <h1 class="popup-title">HTML Visual Editor</h1>
+    <div class="toggle-row">
+      <span class="toggle-label">编辑模式</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="edit-toggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="status" id="status-text">浏览模式</div>
+    <div class="actions">
+      <button id="btn-export" class="action-btn" disabled>导出 HTML</button>
+      <button id="btn-copy" class="action-btn" disabled>复制 HTML</button>
+    </div>
+    <div class="shortcut-hint">快捷键：Alt+E 切换编辑模式</div>
+  </div>
+  <script src="popup.ts" type="module"></script>
 </body>
 </html>
