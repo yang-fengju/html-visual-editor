@@ -3,7 +3,7 @@
   "name": "HTML Visual Editor",
   "version": "0.1.0",
   "description": "像 Word 一样直接在网页上编辑 HTML",
-  "permissions": ["activeTab", "storage", "downloads"],
+  "permissions": ["activeTab", "storage", "downloads", "scripting"],
   "action": {
     "default_popup": "popup/index.html",
     "default_icon": {

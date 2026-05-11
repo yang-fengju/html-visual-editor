@@ -23,8 +23,20 @@ sendToBackground({ type: 'GET_EDIT_MODE' }).then((response) => {
 
 editToggle.addEventListener('change', async () => {
   const mode: EditorMode = editToggle.checked ? 'edit' : 'browse';
-  await sendToBackground({ type: 'TOGGLE_EDIT_MODE', mode });
-  updateUI(mode);
+  try {
+    const response = await sendToBackground({ type: 'TOGGLE_EDIT_MODE', mode });
+    if (response.type === 'ERROR') {
+      statusText.textContent = response.message;
+      statusText.classList.remove('active');
+      editToggle.checked = !editToggle.checked;
+    } else {
+      updateUI(mode);
+    }
+  } catch (e) {
+    statusText.textContent = '切换失败，请刷新页面后重试';
+    statusText.classList.remove('active');
+    editToggle.checked = !editToggle.checked;
+  }
 });
 
 btnExport.addEventListener('click', async () => {
