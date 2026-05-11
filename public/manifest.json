@@ -1,0 +1,39 @@
+{
+  "manifest_version": 3,
+  "name": "HTML Visual Editor",
+  "version": "0.1.0",
+  "description": "像 Word 一样直接在网页上编辑 HTML",
+  "permissions": ["activeTab", "storage", "downloads"],
+  "action": {
+    "default_popup": "src/popup/index.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "src/background/index.ts",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/content/index.ts"],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "commands": {
+    "toggle-edit-mode": {
+      "suggested_key": {
+        "default": "Alt+E"
+      },
+      "description": "切换编辑模式"
+    }
+  }
+}
