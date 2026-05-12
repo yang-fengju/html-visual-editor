@@ -29,8 +29,10 @@ export class History {
       this.redoStack.push(entry);
       this.notifyChange();
       return true;
-    } catch (e) {
-      console.error('撤销操作失败:', e);
+    } catch {
+      // DOM 引用可能已失效，丢弃这条记录
+      this.undoStack.pop();
+      this.notifyChange();
       return false;
     }
   }
@@ -44,8 +46,10 @@ export class History {
       this.undoStack.push(entry);
       this.notifyChange();
       return true;
-    } catch (e) {
-      console.error('重做操作失败:', e);
+    } catch {
+      // DOM 引用可能已失效，丢弃这条记录
+      this.redoStack.pop();
+      this.notifyChange();
       return false;
     }
   }
