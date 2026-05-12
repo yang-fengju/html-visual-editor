@@ -1,11 +1,21 @@
 import { build } from 'vite';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { cpSync, mkdirSync, rmSync, existsSync, renameSync, readFileSync, writeFileSync } from 'fs';
+import { cpSync, mkdirSync, rmSync, existsSync, readFileSync, writeFileSync } from 'fs';
+import { execSync } from 'child_process';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const distDir = resolve(__dirname, 'dist');
 const tmpDir = resolve(__dirname, '.tmp-build');
+
+// 0. TypeScript 类型检查
+console.log('\n🔍 TypeScript 类型检查...');
+try {
+  execSync('npx tsc --noEmit', { cwd: __dirname, stdio: 'inherit' });
+} catch {
+  console.error('❌ TypeScript 类型检查失败');
+  process.exit(1);
+}
 
 // 清理
 if (existsSync(distDir)) rmSync(distDir, { recursive: true });
