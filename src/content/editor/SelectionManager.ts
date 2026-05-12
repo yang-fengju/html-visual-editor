@@ -1,3 +1,6 @@
+// 不应高亮的大容器元素
+const SKIP_TAGS = new Set(['HTML', 'BODY', 'HEAD', 'SCRIPT', 'STYLE', 'LINK', 'META']);
+
 export class SelectionManager {
   private hoverOverlay: HTMLDivElement;
   private selectOverlay: HTMLDivElement;
@@ -6,13 +9,14 @@ export class SelectionManager {
   private onSelectCallbacks: Array<(el: HTMLElement | null) => void> = [];
   private onDblClickCallbacks: Array<(el: HTMLElement) => void> = [];
   private active = false;
+  private mouseLeaveHandler: () => void;
 
   constructor(private pageRoot: HTMLElement) {
     this.hoverOverlay = document.createElement('div');
     this.hoverOverlay.style.cssText = `
       position: fixed; pointer-events: none; z-index: 2147483646;
       border: 2px dashed #4285f4; background: rgba(66,133,244,0.05);
-      display: none; transition: all 0.1s ease;
+      display: none; transition: all 0.05s ease;
     `;
 
     this.selectOverlay = document.createElement('div');
@@ -39,6 +43,11 @@ export class SelectionManager {
 
     document.body.appendChild(this.hoverOverlay);
     document.body.appendChild(this.selectOverlay);
+
+    // 鼠标离开页面时隐藏悬停框
+    this.mouseLeaveHandler = () => {
+      this.hoverOverlay.style.display = 'none';
+    };
   }
 
   activate() {
@@ -46,6 +55,7 @@ export class SelectionManager {
     this.pageRoot.addEventListener('mousemove', this.handleMouseMove);
     this.pageRoot.addEventListener('click', this.handleClick);
     this.pageRoot.addEventListener('dblclick', this.handleDblClick);
+    document.addEventListener('mouseleave', this.mouseLeaveHandler);
   }
 
   deactivate() {
@@ -53,9 +63,17 @@ export class SelectionManager {
     this.pageRoot.removeEventListener('mousemove', this.handleMouseMove);
     this.pageRoot.removeEventListener('click', this.handleClick);
     this.pageRoot.removeEventListener('dblclick', this.handleDblClick);
+    document.removeEventListener('mouseleave', this.mouseLeaveHandler);
     this.hoverOverlay.style.display = 'none';
     this.selectOverlay.style.display = 'none';
     this.selectedElement = null;
+  }
+
+  // 判断元素是否应该跳过
+  private shouldSkip(target: HTMLElement): boolean {
+    return SKIP_TAGS.has(target.tagName) ||
+      !!target.closest('html-visual-editor') ||
+      !!target.closest('[data-editor-dialog]');
   }
 
   getSelectedElement(): HTMLElement | null { return this.selectedElement; }
@@ -83,8 +101,7 @@ export class SelectionManager {
   private handleClick = (e: MouseEvent) => {
     if (!this.active) return;
     const target = e.target as HTMLElement;
-    // 跳过编辑器 UI 和弹窗
-    if (target.closest('html-visual-editor') || target.closest('[data-editor-dialog]')) return;
+    if (this.shouldSkip(target)) return;
     e.preventDefault();
     e.stopPropagation();
     this.selectedElement = target;
@@ -96,7 +113,7 @@ export class SelectionManager {
   private handleDblClick = (e: MouseEvent) => {
     if (!this.active) return;
     const target = e.target as HTMLElement;
-    if (target.closest('html-visual-editor') || target.closest('[data-editor-dialog]')) return;
+    if (this.shouldSkip(target)) return;
     e.preventDefault();
     this.onDblClickCallbacks.forEach((cb) => cb(target));
   };
@@ -104,7 +121,10 @@ export class SelectionManager {
   private handleMouseMove = (e: MouseEvent) => {
     if (!this.active) return;
     const target = e.target as HTMLElement;
-    if (target.closest('html-visual-editor') || target.closest('[data-editor-dialog]')) return;
+    if (this.shouldSkip(target)) {
+      this.hoverOverlay.style.display = 'none';
+      return;
+    }
     this.highlightElement(target, this.hoverOverlay);
   };
 
