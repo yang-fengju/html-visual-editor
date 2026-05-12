@@ -8,6 +8,10 @@ import { TableEditor } from './TableEditor';
 import { MediaManager } from './MediaManager';
 import { FormEditor } from './FormEditor';
 import { CodeBlockManager } from './CodeBlock';
+import { NoteManager } from './NoteManager';
+import { Annotator } from './Annotator';
+import { StickyNoteRenderer } from './StickyNote';
+import { SideNoteRenderer } from './SideNote';
 import { Toolbar, type ToolbarAction } from '../ui/Toolbar';
 import { ContextMenu, type ContextAction } from '../ui/ContextMenu';
 import { InsertPanel } from '../ui/InsertPanel';
@@ -25,6 +29,11 @@ export class Engine {
   private mediaManager: MediaManager;
   private formEditor: FormEditor;
   private codeBlock: CodeBlockManager;
+  private noteManager: NoteManager;
+  private annotator: Annotator;
+  private stickyRenderer: StickyNoteRenderer;
+  private sideNoteRenderer: SideNoteRenderer;
+  private notesActive = false;
   private toolbar: Toolbar;
   private contextMenu: ContextMenu;
   private insertPanel: InsertPanel;
@@ -57,6 +66,11 @@ export class Engine {
     this.insertPanel = new InsertPanel(shadowRoot);
     container.appendChild(this.insertPanel.getElement());
 
+    this.noteManager = new NoteManager();
+    this.annotator = new Annotator(this.noteManager, shadowRoot, container);
+    this.stickyRenderer = new StickyNoteRenderer(this.noteManager, shadowRoot, container);
+    this.sideNoteRenderer = new SideNoteRenderer(this.noteManager, shadowRoot, container);
+
     this.setupToolbarActions();
     this.setupContextMenuActions();
     this.setupInsertActions();
@@ -84,6 +98,10 @@ export class Engine {
     this.tableEditor.deactivate();
     this.contextMenu.destroy();
     this.history.clear();
+    this.annotator.destroy();
+    this.stickyRenderer.destroy();
+    this.sideNoteRenderer.destroy();
+    this.noteManager.destroy();
     document.removeEventListener('keydown', this.keydownHandler);
     document.removeEventListener('contextmenu', this.contextmenuHandler);
     document.body.style.marginTop = this.originalMarginTop;
@@ -101,12 +119,75 @@ export class Engine {
         case 'copy-html':
           chrome.runtime.sendMessage({ type: 'COPY_HTML' });
           break;
+        case 'toggle-notes':
+          this.notesActive = !this.notesActive;
+          this.toolbar.updateNotesButton(this.notesActive);
+          if (this.notesActive) {
+            this.annotator.activate();
+            this.stickyRenderer.activate();
+            this.sideNoteRenderer.activate();
+          } else {
+            this.annotator.deactivate();
+            this.stickyRenderer.deactivate();
+            this.sideNoteRenderer.deactivate();
+          }
+          break;
+        case 'add-sticky':
+          if (!this.notesActive) {
+            this.notesActive = true;
+            this.toolbar.updateNotesButton(true);
+            this.annotator.activate();
+            this.stickyRenderer.activate();
+            this.sideNoteRenderer.activate();
+          }
+          this.stickyRenderer.createSticky();
+          break;
+        case 'export-with-notes':
+          chrome.runtime.sendMessage({
+            type: 'EXPORT_HTML_WITH_NOTES',
+            options: { includeStyles: true, includeResources: false, format: 'html' },
+          });
+          break;
+        case 'export-notes-json': {
+          const json = this.noteManager.exportJSON();
+          const blob = new Blob([json], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = (document.title || 'page') + '-notes.json';
+          a.click();
+          URL.revokeObjectURL(url);
+          break;
+        }
+        case 'import-notes-json': {
+          const input = document.createElement('input');
+          input.type = 'file';
+          input.accept = '.json';
+          input.addEventListener('change', () => {
+            const file = input.files?.[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              this.noteManager.importJSON(e.target!.result as string);
+              if (this.notesActive) {
+                this.annotator.renderAll();
+                this.stickyRenderer.renderAll();
+                this.sideNoteRenderer.renderAll();
+              }
+            };
+            reader.readAsText(file);
+          });
+          input.click();
+          break;
+        }
         case 'exit':
           chrome.runtime.sendMessage({ type: 'TOGGLE_EDIT_MODE', mode: 'browse' });
           break;
       }
     });
   }
+
+  getNoteManager(): NoteManager { return this.noteManager; }
 
   private setupContextMenuActions() {
     this.contextMenu.onAction((action: ContextAction, target: HTMLElement) => {
@@ -117,6 +198,36 @@ export class Engine {
         case 'delete': this.elementManager.deleteElement(target); break;
         case 'move-up': this.elementManager.moveElement(target, 'up'); break;
         case 'move-down': this.elementManager.moveElement(target, 'down'); break;
+        case 'add-annotation':
+          if (!this.notesActive) {
+            this.notesActive = true;
+            this.toolbar.updateNotesButton(true);
+            this.annotator.activate();
+            this.stickyRenderer.activate();
+            this.sideNoteRenderer.activate();
+          }
+          this.annotator.addAnnotationFromSelection();
+          break;
+        case 'add-sticky':
+          if (!this.notesActive) {
+            this.notesActive = true;
+            this.toolbar.updateNotesButton(true);
+            this.annotator.activate();
+            this.stickyRenderer.activate();
+            this.sideNoteRenderer.activate();
+          }
+          this.stickyRenderer.createSticky();
+          break;
+        case 'add-sidenote':
+          if (!this.notesActive) {
+            this.notesActive = true;
+            this.toolbar.updateNotesButton(true);
+            this.annotator.activate();
+            this.stickyRenderer.activate();
+            this.sideNoteRenderer.activate();
+          }
+          this.sideNoteRenderer.addSideNote(target);
+          break;
       }
     });
   }
