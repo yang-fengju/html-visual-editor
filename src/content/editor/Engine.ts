@@ -30,6 +30,7 @@ export class Engine {
   private insertPanel: InsertPanel;
   private keydownHandler: (e: KeyboardEvent) => void;
   private contextmenuHandler: (e: MouseEvent) => void;
+  private originalMarginTop = '';
 
   constructor(private shadowHost: ShadowHost) {
     const container = shadowHost.getContainer();
@@ -70,8 +71,9 @@ export class Engine {
       this.toolbar.updateUndoRedo(this.history.canUndo, this.history.canRedo);
     });
 
-    this.selectionManager.activate();
+    this.originalMarginTop = document.body.style.marginTop;
     document.body.style.marginTop = '48px';
+    this.selectionManager.activate();
   }
 
   destroy() {
@@ -83,7 +85,7 @@ export class Engine {
     this.history.clear();
     document.removeEventListener('keydown', this.keydownHandler);
     document.removeEventListener('contextmenu', this.contextmenuHandler);
-    document.body.style.marginTop = '';
+    document.body.style.marginTop = this.originalMarginTop;
   }
 
   private setupToolbarActions() {
