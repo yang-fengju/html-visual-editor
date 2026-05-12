@@ -2,7 +2,9 @@ import type { MessageType, ResponseType } from '../shared/messages';
 
 chrome.runtime.onMessage.addListener(
   (message: MessageType, sender, sendResponse: (response: ResponseType) => void) => {
-    handleMessage(message, sender).then(sendResponse);
+    handleMessage(message, sender)
+      .then(sendResponse)
+      .catch(() => sendResponse({ type: 'ERROR', message: '内部错误' }));
     return true;
   }
 );
@@ -62,11 +64,10 @@ async function handleMessage(
       try {
         const response: ResponseType = await chrome.tabs.sendMessage(tab.id, message);
         if (response.type === 'HTML_CONTENT') {
-          const blob = new Blob([response.html], { type: 'text/html' });
-          const url = URL.createObjectURL(blob);
+          const base64 = btoa(unescape(encodeURIComponent(response.html)));
+          const url = 'data:text/html;base64,' + base64;
           const filename = sanitizeFilename(response.title) + '.html';
           await chrome.downloads.download({ url, filename, saveAs: true });
-          URL.revokeObjectURL(url);
         }
         return response;
       } catch {
