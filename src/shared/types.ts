@@ -51,3 +51,44 @@ export type InsertableElement =
   | 'form-input' | 'form-textarea' | 'form-select'
   | 'form-checkbox' | 'form-radio' | 'form-button'
   | 'code-block';
+
+// 笔记基础类型
+export interface NoteBase {
+  id: string;
+  type: 'annotation' | 'sticky' | 'sidenote';
+  content: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface AnnotationNote extends NoteBase {
+  type: 'annotation';
+  selector: string;
+  textContent: string;
+  startOffset: number;
+  endOffset: number;
+}
+
+export interface StickyNoteData extends NoteBase {
+  type: 'sticky';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  color: 'yellow' | 'green' | 'blue' | 'pink';
+  minimized: boolean;
+}
+
+export interface SideNoteData extends NoteBase {
+  type: 'sidenote';
+  selector: string;
+}
+
+export type Note = AnnotationNote | StickyNoteData | SideNoteData;
+
+export interface PageNotes {
+  url: string;
+  title: string;
+  notes: Note[];
+  savedAt: number;
+}
