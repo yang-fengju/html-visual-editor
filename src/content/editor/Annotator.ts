@@ -32,7 +32,9 @@ export class Annotator {
     this.addBtn.setAttribute('data-editor-dialog', '');
     this.addBtn.style.cssText = `position:fixed;display:none;background:#4285f4;color:white;padding:4px 12px;border-radius:4px;font-size:12px;cursor:pointer;z-index:2147483647;box-shadow:0 2px 8px rgba(0,0,0,0.2);pointer-events:auto;user-select:none;`;
     this.addBtn.textContent = '+ 批注';
-    this.addBtn.addEventListener('click', () => this.addAnnotationFromSelection());
+    // mousedown 时 preventDefault 保持选区不被清空
+    this.addBtn.addEventListener('mousedown', (e) => { e.preventDefault(); e.stopPropagation(); });
+    this.addBtn.addEventListener('click', (e) => { e.stopPropagation(); this.addAnnotationFromSelection(); });
     document.body.appendChild(this.addBtn);
 
     const style = document.createElement('style');

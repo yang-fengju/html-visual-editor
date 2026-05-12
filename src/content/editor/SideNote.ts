@@ -20,6 +20,7 @@ export class SideNoteRenderer {
   private markers: Map<string, HTMLDivElement> = new Map();
   private noteAreas: Map<string, HTMLDivElement> = new Map();
   private plusIcon: HTMLDivElement | null = null;
+  private plusTarget: HTMLElement | null = null;
   private active = false;
   private mouseMoveHandler: (e: MouseEvent) => void;
 
@@ -42,8 +43,10 @@ export class SideNoteRenderer {
         background:#4285f4;border-radius:2px;pointer-events:none;
       }
       .sidenote-area {
-        background:#f8f9fa;border:1px solid #e0e0e0;border-radius:6px;
-        padding:10px 14px;margin:6px 0;pointer-events:auto;
+        position:fixed;right:16px;width:280px;background:white;
+        border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.15);
+        border-left:3px solid #4285f4;padding:10px 14px;
+        pointer-events:auto;z-index:10;max-height:300px;overflow-y:auto;
       }
       .sidenote-area-header {
         display:flex;justify-content:space-between;align-items:center;
@@ -110,18 +113,20 @@ export class SideNoteRenderer {
       this.plusIcon.className = 'sidenote-plus';
       this.plusIcon.setAttribute('data-editor-dialog', '');
       this.plusIcon.textContent = '+';
+      // 固定绑定一次 click 事件，通过 plusTarget 获取当前目标
+      this.plusIcon.addEventListener('mousedown', (e) => { e.preventDefault(); e.stopPropagation(); });
+      this.plusIcon.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (this.plusTarget) { this.addSideNote(this.plusTarget); this.hidePlusIcon(); }
+      });
       this.container.appendChild(this.plusIcon);
     }
+    this.plusTarget = el;
     const rect = el.getBoundingClientRect();
     this.plusIcon.style.display = 'flex';
     this.plusIcon.style.left = (rect.left - 30) + 'px';
-    this.plusIcon.style.top = (mouseY - 11) + 'px';
-
-    // 移除旧点击，添加新的
-    const newPlus = this.plusIcon.cloneNode(true) as HTMLDivElement;
-    this.plusIcon.replaceWith(newPlus);
-    this.plusIcon = newPlus;
-    newPlus.addEventListener('click', (e) => { e.stopPropagation(); this.addSideNote(el); this.hidePlusIcon(); });
+    // 固定在段落的垂直中心，不跟鼠标 Y 轴走
+    this.plusIcon.style.top = (rect.top + rect.height / 2 - 11) + 'px';
   }
 
   private hidePlusIcon() { if (this.plusIcon) this.plusIcon.style.display = 'none'; }
@@ -131,14 +136,13 @@ export class SideNoteRenderer {
       const el = document.querySelector(note.selector) as HTMLElement;
       if (!el) return;
 
-      // 蓝色标记条
+      // 蓝色标记条（fixed 定位，不修改页面元素）
       const marker = document.createElement('div');
       marker.className = 'sidenote-marker';
       marker.setAttribute('data-editor-dialog', '');
-      marker.style.height = el.offsetHeight + 'px';
-      marker.style.top = el.offsetTop + 'px';
-      if (!el.style.position || el.style.position === 'static') el.style.position = 'relative';
-      el.appendChild(marker);
+      const elRect2 = el.getBoundingClientRect();
+      marker.style.cssText = `position:fixed;left:${elRect2.left - 8}px;top:${elRect2.top}px;height:${elRect2.height}px;width:3px;background:#4285f4;border-radius:2px;pointer-events:none;z-index:10;`;
+      this.container.appendChild(marker);
       this.markers.set(note.id, marker);
 
       // 笔记区域
@@ -165,7 +169,10 @@ export class SideNoteRenderer {
       if (ta) ta.addEventListener('blur', () => { this.noteManager.updateNote(note.id, { content: editor.getValue() }); });
       area.appendChild(editor.getElement());
 
-      el.insertAdjacentElement('afterend', area);
+      // 定位到段落右侧（固定定位，不占用页面空间）
+      const elRect = el.getBoundingClientRect();
+      area.style.top = elRect.top + 'px';
+      this.container.appendChild(area);
       this.noteAreas.set(note.id, area);
     } catch { /* 元素不存在 */ }
   }
