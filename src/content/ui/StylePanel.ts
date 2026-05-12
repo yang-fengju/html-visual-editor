@@ -175,8 +175,14 @@ export class StylePanel {
   }
 
   private rgbToHex(rgb: string): string {
-    const match = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
-    if (!match) return '#000000';
+    if (!rgb || rgb === 'transparent') return '#000000';
+    // 支持 rgb() 和 rgba()
+    const match = rgb.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+    if (!match) {
+      // 如果已经是 hex 格式直接返回
+      if (rgb.startsWith('#')) return rgb;
+      return '#000000';
+    }
     const r = parseInt(match[1]).toString(16).padStart(2, '0');
     const g = parseInt(match[2]).toString(16).padStart(2, '0');
     const b = parseInt(match[3]).toString(16).padStart(2, '0');
