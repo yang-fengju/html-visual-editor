@@ -76,13 +76,28 @@ export class MediaManager {
         };
         reader.readAsDataURL(fileInput.files[0]);
       } else if (embedInput?.value) {
-        const oldHTML = element.outerHTML;
-        const parent = element.parentElement!;
-        const wrapper = document.createElement('div');
-        wrapper.innerHTML = embedInput.value;
-        const newEl = wrapper.firstElementChild || wrapper;
-        parent.replaceChild(newEl, element);
-        this.history.push('media-change', () => { parent.replaceChild(element, newEl); }, () => { parent.replaceChild(newEl, element); });
+        // 安全校验：只允许 iframe 标签，且 src 必须是 http/https
+        const parsed = new DOMParser().parseFromString(embedInput.value, 'text/html');
+        const iframe = parsed.querySelector('iframe');
+        if (iframe) {
+          const src = iframe.getAttribute('src') || '';
+          if (src.startsWith('https://') || src.startsWith('http://')) {
+            // 创建干净的 iframe，只保留安全属性
+            const safeIframe = document.createElement('iframe');
+            safeIframe.src = src;
+            safeIframe.width = iframe.getAttribute('width') || '560';
+            safeIframe.height = iframe.getAttribute('height') || '315';
+            safeIframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+            safeIframe.style.cssText = 'max-width: 100%; border: none;';
+
+            const parent = element.parentElement!;
+            parent.replaceChild(safeIframe, element);
+            this.history.push('media-change',
+              () => { parent.replaceChild(element, safeIframe); },
+              () => { parent.replaceChild(safeIframe, element); }
+            );
+          }
+        }
       }
       cleanup();
     });
