@@ -57,7 +57,13 @@ export class FloatingBar {
     `;
     this.shadowRoot.appendChild(style);
 
-    this.bar.addEventListener('mousedown', (e) => { e.preventDefault(); });
+    this.bar.addEventListener('mousedown', (e) => {
+      // 只对按钮阻止默认行为（保持文本选区），不影响 select 和 color input
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'BUTTON' || target.closest('button')) {
+        e.preventDefault();
+      }
+    });
 
     this.bar.querySelectorAll('button').forEach((btn) => {
       btn.addEventListener('click', () => {
