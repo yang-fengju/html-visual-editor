@@ -176,6 +176,9 @@ export class Annotator {
     const editor = new NoteEditor();
     editor.setValue(note.content);
     editor.onSave((content) => { this.noteManager.updateNote(note.id, { content }); });
+    // blur 时也自动保存
+    const ta = editor.getElement().querySelector('textarea');
+    if (ta) ta.addEventListener('blur', () => { this.noteManager.updateNote(note.id, { content: editor.getValue() }); });
     bubble.appendChild(editor.getElement());
     this.container.appendChild(bubble);
     this.bubbles.set(note.id, bubble);
