@@ -11,6 +11,9 @@ export class StyleEditor {
   ) {
     this.stylePanel = new StylePanel(shadowRoot);
     container.appendChild(this.stylePanel.getElement());
+    this.stylePanel.onPreview((element, prop, value) => {
+      this.previewStyleOnElement(element, prop, value);
+    });
     this.stylePanel.onChange((element, prop, value) => {
       this.applyStyleToElement(element, prop, value);
     });
@@ -22,6 +25,10 @@ export class StyleEditor {
   destroy() {
     this.stylePanel.hide();
     this.stylePanel.getElement().remove();
+  }
+
+  previewStyleOnElement(element: HTMLElement, prop: string, value: string) {
+    (element.style as any)[prop] = value;
   }
 
   applyStyleToElement(element: HTMLElement, prop: string, value: string) {

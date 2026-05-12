@@ -26,6 +26,7 @@ export class StylePanel {
   private fieldsContainer: HTMLDivElement;
   private currentElement: HTMLElement | null = null;
   private onChangeCallbacks: Array<(element: HTMLElement, prop: string, value: string) => void> = [];
+  private onPreviewCallbacks: Array<(element: HTMLElement, prop: string, value: string) => void> = [];
 
   constructor(private shadowRoot: ShadowRoot) {
     this.panel = document.createElement('div');
@@ -85,6 +86,10 @@ export class StylePanel {
     this.onChangeCallbacks.push(callback);
   }
 
+  onPreview(callback: (element: HTMLElement, prop: string, value: string) => void) {
+    this.onPreviewCallbacks.push(callback);
+  }
+
   private buildFields(element: HTMLElement) {
     this.fieldsContainer.innerHTML = '';
     const computed = window.getComputedStyle(element);
@@ -109,6 +114,9 @@ export class StylePanel {
         textInput.value = currentValue;
         colorInput.addEventListener('input', () => {
           textInput.value = colorInput.value;
+          this.applyPreview(field.prop, colorInput.value);
+        });
+        colorInput.addEventListener('change', () => {
           this.applyChange(field.prop, colorInput.value);
         });
         textInput.addEventListener('change', () => { this.applyChange(field.prop, textInput.value); });
@@ -132,7 +140,8 @@ export class StylePanel {
         input.min = String(field.min ?? 0);
         input.max = String(field.max ?? 100);
         input.value = String(parseFloat(currentValue) * 100 || 100);
-        input.addEventListener('input', () => { this.applyChange(field.prop, String(parseInt(input.value) / 100)); });
+        input.addEventListener('input', () => { this.applyPreview(field.prop, String(parseInt(input.value) / 100)); });
+        input.addEventListener('change', () => { this.applyChange(field.prop, String(parseInt(input.value) / 100)); });
         div.appendChild(input);
       } else {
         const input = document.createElement('input');
@@ -151,6 +160,12 @@ export class StylePanel {
       }
       this.fieldsContainer.appendChild(div);
     });
+  }
+
+  private applyPreview(prop: string, value: string) {
+    if (this.currentElement) {
+      this.onPreviewCallbacks.forEach((cb) => cb(this.currentElement!, prop, value));
+    }
   }
 
   private applyChange(prop: string, value: string) {
