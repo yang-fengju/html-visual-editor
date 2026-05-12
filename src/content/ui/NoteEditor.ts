@@ -9,8 +9,18 @@ function renderMarkdown(md: string): string {
     .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
-    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%">')
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_, alt, url) => {
+      if (/^(https?:\/\/|data:image\/)/.test(url)) {
+        return `<img src="${url}" alt="${alt}" style="max-width:100%">`;
+      }
+      return alt;
+    })
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, text, url) => {
+      if (/^(https?:\/\/|mailto:|#)/.test(url)) {
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+      }
+      return text;
+    })
     .replace(/^[\-\*] (.+)$/gm, '<li>$1</li>')
     .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
     .replace(/\n\n/g, '</p><p>')
