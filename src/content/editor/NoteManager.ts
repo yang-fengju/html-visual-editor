@@ -67,7 +67,7 @@ export class NoteManager {
     if (changed) { this.scheduleSave(); this.notifyChange(); }
   }
 
-  addNote(note: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>): Note {
+  addNote(note: Omit<Note, 'id' | 'createdAt' | 'updatedAt'> & Record<string, unknown>): Note {
     const fullNote = { ...note, id: generateId(), createdAt: Date.now(), updatedAt: Date.now() } as Note;
     this.notes.push(fullNote);
     this.scheduleSave();
