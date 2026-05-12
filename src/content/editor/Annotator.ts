@@ -22,6 +22,7 @@ export class Annotator {
   private addBtn: HTMLDivElement;
   private active = false;
   private selectionHandler: () => void;
+  private cachedRange: Range | null = null;
 
   constructor(
     private noteManager: NoteManager,
@@ -73,10 +74,10 @@ export class Annotator {
   }
 
   addAnnotationFromSelection() {
-    const selection = document.getSelection();
-    if (!selection || selection.isCollapsed) return;
-    const range = selection.getRangeAt(0);
-    const textContent = selection.toString().trim();
+    // 使用缓存的 Range（点击按钮时浏览器可能已清空实时 selection）
+    const range = this.cachedRange;
+    if (!range) return;
+    const textContent = range.toString().trim();
     if (!textContent) return;
     const selector = getCSSPath(range.startContainer);
     const note = this.noteManager.addNote({
@@ -84,7 +85,8 @@ export class Annotator {
       startOffset: range.startOffset, endOffset: range.endOffset,
     }) as AnnotationNote;
     this.addBtn.style.display = 'none';
-    selection.removeAllRanges();
+    this.cachedRange = null;
+    document.getSelection()?.removeAllRanges();
     this.renderAnnotation(note);
     const bubble = this.bubbles.get(note.id);
     if (bubble) {
@@ -103,14 +105,21 @@ export class Annotator {
     if (!this.active) return;
     const selection = document.getSelection();
     if (!selection || selection.isCollapsed || !selection.rangeCount) {
-      this.addBtn.style.display = 'none'; return;
+      // 不立即隐藏按钮——如果有缓存的 Range，按钮保持显示让用户能点击
+      if (!this.cachedRange) this.addBtn.style.display = 'none';
+      return;
     }
     const text = selection.toString().trim();
-    if (!text) { this.addBtn.style.display = 'none'; return; }
+    if (!text) {
+      if (!this.cachedRange) this.addBtn.style.display = 'none';
+      return;
+    }
     const anchor = selection.anchorNode;
     if (anchor && (anchor as HTMLElement).closest?.('html-visual-editor')) return;
     if (anchor && (anchor as HTMLElement).closest?.('[data-editor-dialog]')) return;
     const range = selection.getRangeAt(0);
+    // 缓存 Range 供点击按钮时使用
+    this.cachedRange = range.cloneRange();
     const rect = range.getBoundingClientRect();
     this.addBtn.style.display = 'block';
     this.addBtn.style.left = (rect.left + rect.width / 2 - 30) + 'px';

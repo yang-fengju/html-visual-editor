@@ -99,8 +99,20 @@ export class SideNoteRenderer {
   private handleMouseMove(e: MouseEvent) {
     if (!this.active) return;
     const target = e.target as HTMLElement;
+
+    // 如果鼠标在"+"按钮区域内，保持显示不隐藏
+    if (this.plusIcon && this.plusTarget && this.plusIcon.style.display === 'flex') {
+      const px = parseFloat(this.plusIcon.style.left);
+      const py = parseFloat(this.plusIcon.style.top);
+      const size = 22; // "+"按钮尺寸
+      const margin = 12; // 安全区域
+      if (e.clientX >= px - margin && e.clientX <= px + size + margin &&
+          e.clientY >= py - margin && e.clientY <= py + size + margin) {
+        return;
+      }
+    }
+
     if (target.closest('html-visual-editor') || target.closest('[data-editor-dialog]')) { this.hidePlusIcon(); return; }
-    // 用 closest 找最近的块级元素
     const blockTags = Array.from(BLOCK_TAGS).map(t => t.toLowerCase()).join(',');
     const block = target.closest(blockTags) as HTMLElement | null;
     if (!block) { this.hidePlusIcon(); return; }
@@ -145,21 +157,46 @@ export class SideNoteRenderer {
       this.container.appendChild(marker);
       this.markers.set(note.id, marker);
 
-      // 笔记区域
+      // 笔记区域（默认折叠为小图标，点击展开）
       const area = document.createElement('div');
       area.className = 'sidenote-area';
       area.setAttribute('data-editor-dialog', '');
+      area.style.display = 'none'; // 默认隐藏面板
+
+      // 小图标（折叠态，显示在蓝色标记条旁）
+      const toggle = document.createElement('div');
+      toggle.setAttribute('data-editor-dialog', '');
+      toggle.style.cssText = `position:fixed;left:${elRect2.left - 24}px;top:${elRect2.top}px;width:20px;height:20px;border-radius:50%;background:#4285f4;color:white;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;pointer-events:auto;z-index:10;box-shadow:0 1px 4px rgba(0,0,0,0.2);`;
+      toggle.textContent = '\u{1F4DD}';
+      toggle.title = '展开段落笔记';
+
       const header = document.createElement('div');
       header.className = 'sidenote-area-header';
-      header.innerHTML = '<span>段落笔记</span>';
+      const titleSpan = document.createElement('span');
+      titleSpan.textContent = '段落笔记';
+
+      const headerActions = document.createElement('div');
+      headerActions.style.cssText = 'display:flex;gap:4px;';
+
+      const foldBtn = document.createElement('button');
+      foldBtn.textContent = '\u2212'; foldBtn.title = '收起';
+      foldBtn.addEventListener('click', () => {
+        area.style.display = 'none';
+        toggle.style.display = 'flex';
+      });
+
       const delBtn = document.createElement('button');
       delBtn.textContent = '\u00d7'; delBtn.title = '删除笔记';
       delBtn.addEventListener('click', () => {
         this.noteManager.deleteNote(note.id);
-        marker.remove(); area.remove();
+        marker.remove(); area.remove(); toggle.remove();
         this.markers.delete(note.id); this.noteAreas.delete(note.id);
       });
-      header.appendChild(delBtn);
+
+      headerActions.appendChild(foldBtn);
+      headerActions.appendChild(delBtn);
+      header.appendChild(titleSpan);
+      header.appendChild(headerActions);
       area.appendChild(header);
 
       const editor = new NoteEditor();
@@ -169,11 +206,28 @@ export class SideNoteRenderer {
       if (ta) ta.addEventListener('blur', () => { this.noteManager.updateNote(note.id, { content: editor.getValue() }); });
       area.appendChild(editor.getElement());
 
-      // 定位到段落右侧（固定定位，不占用页面空间）
+      // 点击小图标展开面板
+      toggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggle.style.display = 'none';
+        area.style.display = 'block';
+        const currentRect = el.getBoundingClientRect();
+        area.style.top = currentRect.top + 'px';
+      });
+
+      // 定位到段落右侧
       const elRect = el.getBoundingClientRect();
       area.style.top = elRect.top + 'px';
+
+      this.container.appendChild(toggle);
       this.container.appendChild(area);
       this.noteAreas.set(note.id, area);
+
+      // 新创建的笔记自动展开
+      if (!note.content) {
+        toggle.style.display = 'none';
+        area.style.display = 'block';
+      }
     } catch { /* 元素不存在 */ }
   }
 
