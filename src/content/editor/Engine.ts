@@ -151,8 +151,23 @@ export class Engine {
   }
 
   private handleKeydown(e: KeyboardEvent) {
-    if (e.ctrlKey && e.key === 'z' && !e.shiftKey) { e.preventDefault(); this.history.undo(); }
-    if ((e.ctrlKey && e.key === 'y') || (e.ctrlKey && e.shiftKey && e.key === 'z')) { e.preventDefault(); this.history.redo(); }
+    const target = e.target as HTMLElement;
+    const isEditing = target.isContentEditable ||
+      target.tagName === 'INPUT' ||
+      target.tagName === 'TEXTAREA' ||
+      target.tagName === 'SELECT';
+
+    // Ctrl+Z: 撤销（仅在非编辑状态下使用编辑器的撤销）
+    if (e.ctrlKey && e.key === 'z' && !e.shiftKey && !isEditing) {
+      e.preventDefault();
+      this.history.undo();
+    }
+    // Ctrl+Y 或 Ctrl+Shift+Z: 重做
+    if (((e.ctrlKey && e.key === 'y') || (e.ctrlKey && e.shiftKey && e.key === 'z')) && !isEditing) {
+      e.preventDefault();
+      this.history.redo();
+    }
+    // Escape: 退出当前编辑状态（任何时候都可以）
     if (e.key === 'Escape') {
       this.textEditor.stopEditing();
       this.tableEditor.deactivate();
@@ -160,7 +175,8 @@ export class Engine {
       this.contextMenu.hide();
       this.insertPanel.hide();
     }
-    if (e.key === 'Delete' && !this.textEditor.isEditing()) {
+    // Delete: 删除选中元素（仅在非编辑状态）
+    if (e.key === 'Delete' && !isEditing && !this.textEditor.isEditing()) {
       const selected = this.selectionManager.getSelectedElement();
       if (selected) this.elementManager.deleteElement(selected);
     }
