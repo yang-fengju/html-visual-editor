@@ -21,21 +21,33 @@ export class History {
   }
 
   undo(): boolean {
-    const entry = this.undoStack.pop();
+    const entry = this.undoStack[this.undoStack.length - 1];
     if (!entry) return false;
-    entry.undo();
-    this.redoStack.push(entry);
-    this.notifyChange();
-    return true;
+    try {
+      entry.undo();
+      this.undoStack.pop();
+      this.redoStack.push(entry);
+      this.notifyChange();
+      return true;
+    } catch (e) {
+      console.error('撤销操作失败:', e);
+      return false;
+    }
   }
 
   redo(): boolean {
-    const entry = this.redoStack.pop();
+    const entry = this.redoStack[this.redoStack.length - 1];
     if (!entry) return false;
-    entry.redo();
-    this.undoStack.push(entry);
-    this.notifyChange();
-    return true;
+    try {
+      entry.redo();
+      this.redoStack.pop();
+      this.undoStack.push(entry);
+      this.notifyChange();
+      return true;
+    } catch (e) {
+      console.error('重做操作失败:', e);
+      return false;
+    }
   }
 
   get canUndo(): boolean { return this.undoStack.length > 0; }
