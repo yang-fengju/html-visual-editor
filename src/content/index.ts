@@ -62,13 +62,34 @@ chrome.runtime.onMessage.addListener(
         overlays.forEach((el) => {
           if (el.parentNode) { removedOverlays.push({ el, parent: el.parentNode }); el.remove(); }
         });
-        const noteElements = document.querySelectorAll('[data-editor-dialog], [data-editor-note-ref]');
-        const removedNoteEls: Array<{ el: Element; parent: Node; next: Node | null }> = [];
-        noteElements.forEach((el) => {
+        // 移除编辑器弹窗 DOM，但对批注高亮 mark 做 unwrap（保留原文）
+        const editorDialogs = document.querySelectorAll('[data-editor-dialog]');
+        const removedDialogs: Array<{ el: Element; parent: Node; next: Node | null }> = [];
+        editorDialogs.forEach((el) => {
           if (el.parentNode) {
-            removedNoteEls.push({ el, parent: el.parentNode, next: el.nextSibling });
+            removedDialogs.push({ el, parent: el.parentNode, next: el.nextSibling });
             el.remove();
           }
+        });
+
+        // 对批注 mark 标签做 unwrap：保留内部文字，移除 mark 包装
+        const noteMarks = document.querySelectorAll('mark[data-editor-note-ref]');
+        const unwrappedMarks: Array<{ mark: Element; parent: Node; textNodes: Text[]; beforeNode: Node | null }> = [];
+        noteMarks.forEach((mark) => {
+          const parent = mark.parentNode;
+          if (!parent) return;
+          const beforeNode = mark.nextSibling;
+          const textNodes: Text[] = [];
+          // 将 mark 的内容提取为文本节点
+          while (mark.firstChild) {
+            const child = mark.firstChild;
+            if (child.nodeType === Node.TEXT_NODE) {
+              textNodes.push(child as Text);
+            }
+            parent.insertBefore(child, mark);
+          }
+          mark.remove();
+          unwrappedMarks.push({ mark, parent, textNodes, beforeNode });
         });
 
         let html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
@@ -77,7 +98,15 @@ chrome.runtime.onMessage.addListener(
           html = html.replace('</body>', notesHTML + '</body>');
         }
 
-        removedNoteEls.forEach(({ el, parent, next }) => {
+        // 恢复批注 mark 标签
+        unwrappedMarks.reverse().forEach(({ mark, parent, textNodes, beforeNode }) => {
+          textNodes.forEach((t) => mark.appendChild(t));
+          if (beforeNode) parent.insertBefore(mark, beforeNode);
+          else parent.appendChild(mark);
+        });
+
+        // 恢复编辑器弹窗 DOM
+        removedDialogs.forEach(({ el, parent, next }) => {
           if (next) parent.insertBefore(el, next);
           else parent.appendChild(el);
         });
