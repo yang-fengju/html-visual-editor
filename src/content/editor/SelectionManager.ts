@@ -10,6 +10,7 @@ export class SelectionManager {
   private onDblClickCallbacks: Array<(el: HTMLElement) => void> = [];
   private active = false;
   private mouseLeaveHandler: () => void;
+  private scrollHandler: () => void;
 
   constructor(private pageRoot: HTMLElement) {
     this.hoverOverlay = document.createElement('div');
@@ -48,6 +49,14 @@ export class SelectionManager {
     this.mouseLeaveHandler = () => {
       this.hoverOverlay.style.display = 'none';
     };
+
+    // 滚动时更新选中框位置
+    this.scrollHandler = () => {
+      if (this.selectedElement) {
+        this.highlightElement(this.selectedElement, this.selectOverlay);
+      }
+      this.hoverOverlay.style.display = 'none';
+    };
   }
 
   activate() {
@@ -56,6 +65,7 @@ export class SelectionManager {
     this.pageRoot.addEventListener('click', this.handleClick);
     this.pageRoot.addEventListener('dblclick', this.handleDblClick);
     document.addEventListener('mouseleave', this.mouseLeaveHandler);
+    window.addEventListener('scroll', this.scrollHandler, true);
   }
 
   deactivate() {
@@ -64,6 +74,7 @@ export class SelectionManager {
     this.pageRoot.removeEventListener('click', this.handleClick);
     this.pageRoot.removeEventListener('dblclick', this.handleDblClick);
     document.removeEventListener('mouseleave', this.mouseLeaveHandler);
+    window.removeEventListener('scroll', this.scrollHandler, true);
     this.hoverOverlay.style.display = 'none';
     this.selectOverlay.style.display = 'none';
     this.selectedElement = null;
