@@ -10,25 +10,62 @@ export class FormEditor {
 
   showPropertyEditor(element: HTMLElement) {
     const fields = this.getEditableProperties(element);
-    let fieldsHTML = '';
-    fields.forEach((field) => {
-      if (field.type === 'options') {
-        fieldsHTML += `<div style="margin-bottom: 12px;"><label style="display: block; font-size: 13px; margin-bottom: 4px;">${field.label}</label><textarea id="form-${field.prop}" rows="4" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; box-sizing: border-box;">${field.value}</textarea><small style="color: #888; font-size: 11px;">每行一个选项</small></div>`;
-      } else {
-        fieldsHTML += `<div style="margin-bottom: 12px;"><label style="display: block; font-size: 13px; margin-bottom: 4px;">${field.label}</label><input type="${field.type}" id="form-${field.prop}" value="${field.value}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; box-sizing: border-box;"></div>`;
-      }
-    });
 
     const dialog = document.createElement('div');
     dialog.style.cssText = `position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); padding: 24px; z-index: 2147483647; min-width: 360px;`;
-    dialog.innerHTML = `
-      <h3 style="margin: 0 0 16px; font-size: 16px;">编辑表单属性 - &lt;${element.tagName.toLowerCase()}&gt;</h3>
-      ${fieldsHTML}
-      <div style="display: flex; justify-content: flex-end; gap: 8px;">
-        <button id="form-cancel" style="padding: 8px 16px; border: 1px solid #ddd; border-radius: 4px; background: white; cursor: pointer;">取消</button>
-        <button id="form-confirm" style="padding: 8px 16px; border: none; border-radius: 4px; background: #4285f4; color: white; cursor: pointer;">确认</button>
-      </div>
-    `;
+
+    const title = document.createElement('h3');
+    title.style.cssText = 'margin: 0 0 16px; font-size: 16px;';
+    title.textContent = `编辑表单属性 - <${element.tagName.toLowerCase()}>`;
+    dialog.appendChild(title);
+
+    const inputs: Map<string, HTMLInputElement | HTMLTextAreaElement> = new Map();
+
+    fields.forEach((field) => {
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = 'margin-bottom: 12px;';
+
+      const label = document.createElement('label');
+      label.style.cssText = 'display: block; font-size: 13px; margin-bottom: 4px;';
+      label.textContent = field.label;
+      wrapper.appendChild(label);
+
+      if (field.type === 'options') {
+        const textarea = document.createElement('textarea');
+        textarea.id = `form-${field.prop}`;
+        textarea.rows = 4;
+        textarea.style.cssText = 'width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; box-sizing: border-box;';
+        textarea.value = field.value;
+        wrapper.appendChild(textarea);
+        const small = document.createElement('small');
+        small.style.cssText = 'color: #888; font-size: 11px;';
+        small.textContent = '每行一个选项';
+        wrapper.appendChild(small);
+        inputs.set(field.prop, textarea);
+      } else {
+        const input = document.createElement('input');
+        input.type = field.type;
+        input.id = `form-${field.prop}`;
+        input.value = field.value;
+        input.style.cssText = 'width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; box-sizing: border-box;';
+        wrapper.appendChild(input);
+        inputs.set(field.prop, input);
+      }
+
+      dialog.appendChild(wrapper);
+    });
+
+    const btnRow = document.createElement('div');
+    btnRow.style.cssText = 'display: flex; justify-content: flex-end; gap: 8px;';
+    const cancelBtn = document.createElement('button');
+    cancelBtn.textContent = '取消';
+    cancelBtn.style.cssText = 'padding: 8px 16px; border: 1px solid #ddd; border-radius: 4px; background: white; cursor: pointer;';
+    const confirmBtn = document.createElement('button');
+    confirmBtn.textContent = '确认';
+    confirmBtn.style.cssText = 'padding: 8px 16px; border: none; border-radius: 4px; background: #4285f4; color: white; cursor: pointer;';
+    btnRow.appendChild(cancelBtn);
+    btnRow.appendChild(confirmBtn);
+    dialog.appendChild(btnRow);
 
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 2147483646;';
@@ -36,19 +73,20 @@ export class FormEditor {
     document.body.appendChild(dialog);
 
     const cleanup = () => { dialog.remove(); overlay.remove(); };
-    dialog.querySelector('#form-cancel')!.addEventListener('click', cleanup);
+    cancelBtn.addEventListener('click', cleanup);
     overlay.addEventListener('click', cleanup);
 
-    dialog.querySelector('#form-confirm')!.addEventListener('click', () => {
+    confirmBtn.addEventListener('click', () => {
       const beforeHTML = element.outerHTML;
       fields.forEach((field) => {
-        const input = dialog.querySelector(`#form-${field.prop}`) as HTMLInputElement | HTMLTextAreaElement;
+        const input = inputs.get(field.prop);
         if (!input) return;
         if (field.prop === 'options' && element instanceof HTMLSelectElement) {
           element.innerHTML = '';
           input.value.split('\n').filter(Boolean).forEach((text) => {
             const opt = document.createElement('option');
-            opt.textContent = text.trim(); opt.value = text.trim();
+            opt.textContent = text.trim();
+            opt.value = text.trim();
             element.appendChild(opt);
           });
         } else if (field.prop === 'textContent') {
