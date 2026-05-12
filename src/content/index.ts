@@ -3,6 +3,10 @@ import type { EditorMode } from '../shared/types';
 import { ShadowHost } from './ui/ShadowHost';
 import { Engine } from './editor/Engine';
 
+// 单例保护：防止重复注入
+if ((globalThis as any).__htmlVisualEditorLoaded) throw new Error('already loaded');
+(globalThis as any).__htmlVisualEditorLoaded = true;
+
 let currentMode: EditorMode = 'browse';
 let shadowHost: ShadowHost | null = null;
 let engine: Engine | null = null;
