@@ -97,8 +97,11 @@ export class SideNoteRenderer {
     if (!this.active) return;
     const target = e.target as HTMLElement;
     if (target.closest('html-visual-editor') || target.closest('[data-editor-dialog]')) { this.hidePlusIcon(); return; }
-    if (!BLOCK_TAGS.has(target.tagName)) { this.hidePlusIcon(); return; }
-    this.showPlusIcon(target, e.clientY);
+    // 用 closest 找最近的块级元素
+    const blockTags = Array.from(BLOCK_TAGS).map(t => t.toLowerCase()).join(',');
+    const block = target.closest(blockTags) as HTMLElement | null;
+    if (!block) { this.hidePlusIcon(); return; }
+    this.showPlusIcon(block, e.clientY);
   }
 
   private showPlusIcon(el: HTMLElement, mouseY: number) {
