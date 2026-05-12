@@ -123,13 +123,34 @@ export class NoteManager {
 
   generateEmbedHTML(): string {
     if (this.notes.length === 0) return '';
+
     const data: PageNotes = { url: this.url, title: this.title, notes: this.notes, savedAt: Date.now() };
-    return `\n<script type="application/json" data-editor-notes>${JSON.stringify(data)}</script>\n` +
-      `<style data-editor-notes-style>
+    const jsonStr = JSON.stringify(data).replace(/</g, '\\u003c').replace(/>/g, '\\u003e');
+
+    let html = `\n<script type="application/json" data-editor-notes>${jsonStr}</script>\n`;
+
+    html += `<style data-editor-notes-style>
 [data-editor-note]{border-left:3px solid #4285f4;background:#f0f7ff;padding:12px 16px;margin:8px 0;border-radius:0 4px 4px 0;font-size:14px;line-height:1.6}
-[data-note-type="sticky"]{position:absolute;border:1px solid #e0e0e0;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.1);padding:8px 12px;min-width:200px;border-left:3px solid #ffd54f;background:#fffde7}
+[data-note-type="sticky"]{position:relative;border:1px solid #e0e0e0;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.1);padding:8px 12px;min-width:200px;border-left:3px solid #ffd54f;background:#fffde7;margin:8px 0}
 mark[data-editor-note-ref]{background:rgba(255,213,79,0.4);padding:1px 0;border-radius:2px}
 </style>\n`;
+
+    // 为每条笔记生成可见 HTML
+    for (const note of this.notes) {
+      const safeContent = note.content
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/\n/g, '<br>');
+
+      if (note.type === 'annotation') {
+        html += `<aside data-editor-note="${note.id}" data-note-type="annotation"><strong>批注：</strong>${safeContent}</aside>\n`;
+      } else if (note.type === 'sticky') {
+        html += `<aside data-editor-note="${note.id}" data-note-type="sticky" data-color="${note.color}"><strong>便签：</strong>${safeContent}</aside>\n`;
+      } else if (note.type === 'sidenote') {
+        html += `<aside data-editor-note="${note.id}" data-note-type="sidenote" data-selector="${note.selector.replace(/"/g, '&quot;')}"><strong>段落笔记：</strong>${safeContent}</aside>\n`;
+      }
+    }
+
+    return html;
   }
 
   destroy() {
