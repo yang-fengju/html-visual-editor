@@ -9,6 +9,7 @@ export class SelectionManager {
   private onSelectCallbacks: Array<(el: HTMLElement | null) => void> = [];
   private onDblClickCallbacks: Array<(el: HTMLElement) => void> = [];
   private active = false;
+  private lastHoveredElement: HTMLElement | null = null;
   private mouseLeaveHandler: () => void;
   private scrollHandler: () => void;
 
@@ -134,8 +135,15 @@ export class SelectionManager {
     const target = e.target as HTMLElement;
     if (this.shouldSkip(target)) {
       this.hoverOverlay.style.display = 'none';
+      this.lastHoveredElement = null;
       return;
     }
+    // 不高亮当前已选中的元素（避免重影）
+    if (this.selectedElement && this.selectedElement === target) {
+      this.hoverOverlay.style.display = 'none';
+      return;
+    }
+    this.lastHoveredElement = target;
     this.highlightElement(target, this.hoverOverlay);
   };
 

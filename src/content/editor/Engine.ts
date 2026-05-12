@@ -133,6 +133,12 @@ export class Engine {
   private setupSelectionActions() {
     this.selectionManager.onSelect((el) => {
       if (!el) return;
+
+      // 如果正在编辑文本，且点击的是正在编辑的元素或其内部，不要中断编辑
+      if (this.textEditor.isEditing() && this.textEditor.getEditingElement()?.contains(el)) {
+        return;
+      }
+
       this.textEditor.stopEditing();
       this.tableEditor.deactivate();
 

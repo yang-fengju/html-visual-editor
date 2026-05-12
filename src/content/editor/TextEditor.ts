@@ -52,6 +52,7 @@ export class TextEditor {
   }
 
   isEditing(): boolean { return this.editingElement !== null; }
+  getEditingElement(): HTMLElement | null { return this.editingElement; }
 
   destroy() {
     this.stopEditing();
