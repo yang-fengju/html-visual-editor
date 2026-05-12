@@ -12,12 +12,20 @@ export class FormEditor {
     const fields = this.getEditableProperties(element);
 
     const dialog = document.createElement('div');
+    dialog.setAttribute('data-editor-dialog', '');
     dialog.style.cssText = `position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); padding: 24px; z-index: 2147483647; min-width: 360px;`;
 
+    const header = document.createElement('div');
+    header.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin: 0 0 16px;';
     const title = document.createElement('h3');
-    title.style.cssText = 'margin: 0 0 16px; font-size: 16px;';
+    title.style.cssText = 'margin: 0; font-size: 16px;';
     title.textContent = `编辑表单属性 - <${element.tagName.toLowerCase()}>`;
-    dialog.appendChild(title);
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '\u00d7';
+    closeBtn.style.cssText = 'background: none; border: none; font-size: 22px; cursor: pointer; color: #888; padding: 0 4px;';
+    header.appendChild(title);
+    header.appendChild(closeBtn);
+    dialog.appendChild(header);
 
     const inputs: Map<string, HTMLInputElement | HTMLTextAreaElement> = new Map();
 
@@ -68,11 +76,13 @@ export class FormEditor {
     dialog.appendChild(btnRow);
 
     const overlay = document.createElement('div');
+    overlay.setAttribute('data-editor-dialog', '');
     overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 2147483646;';
     document.body.appendChild(overlay);
     document.body.appendChild(dialog);
 
     const cleanup = () => { dialog.remove(); overlay.remove(); };
+    closeBtn.addEventListener('click', cleanup);
     cancelBtn.addEventListener('click', cleanup);
     overlay.addEventListener('click', cleanup);
 

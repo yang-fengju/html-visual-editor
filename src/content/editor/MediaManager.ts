@@ -33,9 +33,13 @@ export class MediaManager {
     const title = isImage ? '替换图片' : '设置媒体源';
 
     const dialog = document.createElement('div');
+    dialog.setAttribute('data-editor-dialog', '');
     dialog.style.cssText = `position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); padding: 24px; z-index: 2147483647; min-width: 400px;`;
     dialog.innerHTML = `
-      <h3 style="margin: 0 0 16px; font-size: 16px;">${title}</h3>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin: 0 0 16px;">
+        <h3 style="margin: 0; font-size: 16px;">${title}</h3>
+        <button id="media-close" style="background: none; border: none; font-size: 22px; cursor: pointer; color: #888; padding: 0 4px;">&times;</button>
+      </div>
       <div style="margin-bottom: 12px;">
         <label style="display: block; font-size: 13px; margin-bottom: 4px;">URL 地址</label>
         <input type="text" id="media-url" placeholder="https://..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; box-sizing: border-box;">
@@ -52,11 +56,13 @@ export class MediaManager {
     `;
 
     const overlay = document.createElement('div');
+    overlay.setAttribute('data-editor-dialog', '');
     overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 2147483646;';
     document.body.appendChild(overlay);
     document.body.appendChild(dialog);
 
     const cleanup = () => { dialog.remove(); overlay.remove(); };
+    dialog.querySelector('#media-close')!.addEventListener('click', cleanup);
     dialog.querySelector('#media-cancel')!.addEventListener('click', cleanup);
     overlay.addEventListener('click', cleanup);
 

@@ -37,9 +37,13 @@ export class CodeBlockManager {
     ).join('');
 
     const dialog = document.createElement('div');
+    dialog.setAttribute('data-editor-dialog', '');
     dialog.style.cssText = `position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); padding: 24px; z-index: 2147483647; width: 600px; max-height: 80vh;`;
     dialog.innerHTML = `
-      <h3 style="margin: 0 0 16px; font-size: 16px;">编辑代码块</h3>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin: 0 0 16px;">
+        <h3 style="margin: 0; font-size: 16px;">编辑代码块</h3>
+        <button id="code-close" style="background: none; border: none; font-size: 22px; cursor: pointer; color: #888; padding: 0 4px;">&times;</button>
+      </div>
       <div style="display: flex; gap: 12px; margin-bottom: 12px; align-items: center;">
         <label style="font-size: 13px;">语言：</label>
         <select id="code-lang" style="padding: 6px 8px; border: 1px solid #ddd; border-radius: 4px;">${langOptions}</select>
@@ -64,11 +68,13 @@ export class CodeBlockManager {
     });
 
     const overlay = document.createElement('div');
+    overlay.setAttribute('data-editor-dialog', '');
     overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 2147483646;';
     document.body.appendChild(overlay);
     document.body.appendChild(dialog);
 
     const cleanup = () => { dialog.remove(); overlay.remove(); };
+    dialog.querySelector('#code-close')!.addEventListener('click', cleanup);
     dialog.querySelector('#code-cancel')!.addEventListener('click', cleanup);
     overlay.addEventListener('click', cleanup);
 

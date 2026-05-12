@@ -80,17 +80,11 @@ export class SelectionManager {
     this.selectOverlay.remove();
   }
 
-  private handleMouseMove = (e: MouseEvent) => {
-    if (!this.active) return;
-    const target = e.target as HTMLElement;
-    if (target.closest('html-visual-editor')) return;
-    this.highlightElement(target, this.hoverOverlay);
-  };
-
   private handleClick = (e: MouseEvent) => {
     if (!this.active) return;
     const target = e.target as HTMLElement;
-    if (target.closest('html-visual-editor')) return;
+    // 跳过编辑器 UI 和弹窗
+    if (target.closest('html-visual-editor') || target.closest('[data-editor-dialog]')) return;
     e.preventDefault();
     e.stopPropagation();
     this.selectedElement = target;
@@ -102,9 +96,16 @@ export class SelectionManager {
   private handleDblClick = (e: MouseEvent) => {
     if (!this.active) return;
     const target = e.target as HTMLElement;
-    if (target.closest('html-visual-editor')) return;
+    if (target.closest('html-visual-editor') || target.closest('[data-editor-dialog]')) return;
     e.preventDefault();
     this.onDblClickCallbacks.forEach((cb) => cb(target));
+  };
+
+  private handleMouseMove = (e: MouseEvent) => {
+    if (!this.active) return;
+    const target = e.target as HTMLElement;
+    if (target.closest('html-visual-editor') || target.closest('[data-editor-dialog]')) return;
+    this.highlightElement(target, this.hoverOverlay);
   };
 
   private highlightElement(el: HTMLElement, overlay: HTMLDivElement) {
