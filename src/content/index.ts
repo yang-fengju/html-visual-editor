@@ -137,7 +137,43 @@ chrome.runtime.onMessage.addListener(
           }
         });
 
+        // 清理笔记 DOM（mark 做 unwrap 保留文字，其他直接移除）
+        const editorDialogsExport = document.querySelectorAll('[data-editor-dialog]');
+        const removedDialogsExport: Array<{ el: Element; parent: Node; next: Node | null }> = [];
+        editorDialogsExport.forEach((el) => {
+          if (el.parentNode) {
+            removedDialogsExport.push({ el, parent: el.parentNode, next: el.nextSibling });
+            el.remove();
+          }
+        });
+        const noteMarksExport = document.querySelectorAll('mark[data-editor-note-ref]');
+        const unwrappedMarksExport: Array<{ mark: Element; parent: Node; textNodes: Text[]; beforeNode: Node | null }> = [];
+        noteMarksExport.forEach((mark) => {
+          const parent = mark.parentNode;
+          if (!parent) return;
+          const beforeNode = mark.nextSibling;
+          const textNodes: Text[] = [];
+          while (mark.firstChild) {
+            const child = mark.firstChild;
+            if (child.nodeType === Node.TEXT_NODE) textNodes.push(child as Text);
+            parent.insertBefore(child, mark);
+          }
+          mark.remove();
+          unwrappedMarksExport.push({ mark, parent, textNodes, beforeNode });
+        });
+
         const html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+
+        // 恢复笔记 DOM
+        unwrappedMarksExport.reverse().forEach(({ mark, parent, textNodes, beforeNode }) => {
+          textNodes.forEach((t) => mark.appendChild(t));
+          if (beforeNode) parent.insertBefore(mark, beforeNode);
+          else parent.appendChild(mark);
+        });
+        removedDialogsExport.forEach(({ el, parent, next }) => {
+          if (next) parent.insertBefore(el, next);
+          else parent.appendChild(el);
+        });
 
         // 恢复所有编辑器 DOM
         removedOverlays.forEach(({ el, parent }) => parent.appendChild(el));
