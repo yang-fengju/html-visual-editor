@@ -1,4 +1,9 @@
-export type ToolbarAction = 'undo' | 'redo' | 'insert' | 'export' | 'copy-html' | 'exit';
+export type ToolbarAction =
+  | 'undo' | 'redo'
+  | 'insert' | 'export' | 'export-with-notes' | 'export-notes-json' | 'import-notes-json'
+  | 'copy-html'
+  | 'toggle-notes' | 'add-sticky'
+  | 'exit';
 
 export class Toolbar {
   private toolbar: HTMLDivElement;
@@ -17,9 +22,19 @@ export class Toolbar {
         <button data-action="redo" title="重做 (Ctrl+Y)" disabled>&#8631; 重做</button>
       </div>
       <div class="toolbar-right">
+        <button data-action="toggle-notes" title="显示/隐藏笔记">&#128221; 笔记</button>
+        <button data-action="add-sticky" title="添加便签">&#128204; 便签</button>
         <button data-action="insert" title="插入元素">+ 插入</button>
         <button data-action="copy-html" title="复制 HTML">复制</button>
-        <button data-action="export" title="导出 HTML">导出</button>
+        <div class="export-dropdown">
+          <button class="export-trigger" title="导出">导出 &#9660;</button>
+          <div class="export-menu">
+            <button data-action="export">导出 HTML</button>
+            <button data-action="export-with-notes">导出 HTML（含笔记）</button>
+            <button data-action="export-notes-json">导出笔记 (JSON)</button>
+            <button data-action="import-notes-json">导入笔记 (JSON)</button>
+          </div>
+        </div>
         <span class="toolbar-separator"></span>
         <button data-action="exit" class="exit-btn" title="退出编辑模式">退出</button>
       </div>
@@ -53,6 +68,16 @@ export class Toolbar {
       .main-toolbar button:disabled { opacity: 0.4; cursor: not-allowed; }
       .exit-btn { color: #d93025 !important; }
       .exit-btn:hover { background: #fce8e6 !important; border-color: #d93025 !important; }
+      .export-dropdown { position: relative; }
+      .export-menu {
+        display: none; position: absolute; top: 100%; right: 0;
+        background: white; border: 1px solid #e0e0e0; border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1); min-width: 200px; z-index: 20; padding: 4px;
+      }
+      .export-dropdown:hover .export-menu { display: block; }
+      .export-menu button { display: block; width: 100%; text-align: left; padding: 8px 12px; white-space: nowrap; }
+      .export-menu button:hover { background: #f0f0f0; }
+      .notes-active { background: #e8f0fe !important; border-color: #4285f4 !important; color: #4285f4 !important; }
     `;
     this.shadowRoot.appendChild(style);
   }
@@ -66,5 +91,10 @@ export class Toolbar {
 
   onAction(callback: (action: ToolbarAction) => void) {
     this.onActionCallbacks.push(callback);
+  }
+
+  updateNotesButton(active: boolean) {
+    const btn = this.toolbar.querySelector('[data-action="toggle-notes"]') as HTMLButtonElement;
+    if (btn) btn.classList.toggle('notes-active', active);
   }
 }
