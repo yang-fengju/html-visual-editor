@@ -75,6 +75,25 @@ async function handleMessage(
       }
     }
 
+    case 'EXPORT_HTML_WITH_NOTES': {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (!tab?.id) return { type: 'ERROR', message: '无法获取当前标签页' };
+      const injected = await ensureContentScript(tab.id);
+      if (!injected) return { type: 'ERROR', message: '无法注入编辑器到当前页面' };
+      try {
+        const response: ResponseType = await chrome.tabs.sendMessage(tab.id, message);
+        if (response.type === 'HTML_CONTENT') {
+          const base64 = btoa(unescape(encodeURIComponent(response.html)));
+          const url = 'data:text/html;base64,' + base64;
+          const filename = sanitizeFilename(response.title) + '-with-notes.html';
+          await chrome.downloads.download({ url, filename, saveAs: true });
+        }
+        return response;
+      } catch {
+        return { type: 'ERROR', message: '导出失败' };
+      }
+    }
+
     case 'COPY_HTML': {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (!tab?.id) return { type: 'ERROR', message: '无法获取当前标签页' };

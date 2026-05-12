@@ -52,6 +52,43 @@ chrome.runtime.onMessage.addListener(
         sendResponse({ type: 'EDIT_MODE_STATUS', mode: currentMode });
         break;
 
+      case 'EXPORT_HTML_WITH_NOTES': {
+        const savedMarginTop = document.body.style.marginTop;
+        document.body.style.marginTop = '';
+        const editorHost = document.querySelector('html-visual-editor');
+        editorHost?.remove();
+        const overlays = document.querySelectorAll('[style*="z-index: 2147483646"], [style*="z-index: 2147483645"]');
+        const removedOverlays: Array<{ el: Element; parent: Node }> = [];
+        overlays.forEach((el) => {
+          if (el.parentNode) { removedOverlays.push({ el, parent: el.parentNode }); el.remove(); }
+        });
+        const noteElements = document.querySelectorAll('[data-editor-dialog], [data-editor-note-ref]');
+        const removedNoteEls: Array<{ el: Element; parent: Node; next: Node | null }> = [];
+        noteElements.forEach((el) => {
+          if (el.parentNode) {
+            removedNoteEls.push({ el, parent: el.parentNode, next: el.nextSibling });
+            el.remove();
+          }
+        });
+
+        let html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+        if (engine) {
+          const notesHTML = engine.getNoteManager().generateEmbedHTML();
+          html = html.replace('</body>', notesHTML + '</body>');
+        }
+
+        removedNoteEls.forEach(({ el, parent, next }) => {
+          if (next) parent.insertBefore(el, next);
+          else parent.appendChild(el);
+        });
+        removedOverlays.forEach(({ el, parent }) => parent.appendChild(el));
+        if (editorHost) document.documentElement.appendChild(editorHost);
+        document.body.style.marginTop = savedMarginTop;
+
+        sendResponse({ type: 'HTML_CONTENT', html, title: document.title });
+        break;
+      }
+
       case 'EXPORT_HTML': {
         // 保存并清理编辑器状态
         const savedMarginTop = document.body.style.marginTop;

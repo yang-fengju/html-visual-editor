@@ -4,6 +4,7 @@ export type MessageType =
   | { type: 'TOGGLE_EDIT_MODE'; mode: EditorMode }
   | { type: 'GET_EDIT_MODE' }
   | { type: 'EXPORT_HTML'; options: ExportOptions }
+  | { type: 'EXPORT_HTML_WITH_NOTES'; options: ExportOptions }
   | { type: 'COPY_HTML'; selector?: string };
 
 export type ResponseType =
