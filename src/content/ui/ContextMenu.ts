@@ -15,6 +15,7 @@ export class ContextMenu {
   private menu: HTMLDivElement;
   private targetElement: HTMLElement | null = null;
   private onActionCallbacks: Array<(action: ContextAction, target: HTMLElement) => void> = [];
+  private clickHandler: () => void;
 
   constructor(private shadowRoot: ShadowRoot) {
     this.menu = document.createElement('div');
@@ -53,7 +54,8 @@ export class ContextMenu {
       .cm-icon { width: 18px; text-align: center; font-size: 14px; }
     `;
     this.shadowRoot.appendChild(style);
-    document.addEventListener('click', () => this.hide());
+    this.clickHandler = () => this.hide();
+    document.addEventListener('click', this.clickHandler);
   }
 
   getElement(): HTMLDivElement { return this.menu; }
@@ -71,6 +73,11 @@ export class ContextMenu {
   }
 
   hide() { this.menu.classList.remove('visible'); this.targetElement = null; }
+
+  destroy() {
+    document.removeEventListener('click', this.clickHandler);
+    this.menu.remove();
+  }
 
   onAction(callback: (action: ContextAction, target: HTMLElement) => void) {
     this.onActionCallbacks.push(callback);

@@ -82,6 +82,7 @@ export class Engine {
     this.styleEditor.destroy();
     this.dragSystem.destroy();
     this.tableEditor.deactivate();
+    this.contextMenu.destroy();
     this.history.clear();
     document.removeEventListener('keydown', this.keydownHandler);
     document.removeEventListener('contextmenu', this.contextmenuHandler);
