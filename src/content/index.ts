@@ -18,9 +18,10 @@ function enterEditMode() {
   shadowHost = new ShadowHost();
   shadowHost.mount();
 
+  const currentHost = shadowHost;
   chrome.storage.local.get('hintDismissed', (result) => {
-    if (!result.hintDismissed) {
-      shadowHost!.showFirstTimeHint();
+    if (!result.hintDismissed && currentHost && currentMode === 'edit') {
+      currentHost.showFirstTimeHint();
     }
   });
 
