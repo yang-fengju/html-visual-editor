@@ -38,6 +38,7 @@ export class CommentSystem {
   private mouseMoveHandler: (e: MouseEvent) => void;
   private scrollHandler: () => void;
   private scrollThrottleId: number | null = null;
+  private suspended = false;
 
   constructor(
     private noteManager: NoteManager,
@@ -71,6 +72,7 @@ export class CommentSystem {
 
   deactivate() {
     this.active = false;
+    this.suspended = false;
     this.commentBtn.style.display = 'none';
     document.removeEventListener('mousemove', this.mouseMoveHandler);
     document.removeEventListener('scroll', this.scrollHandler, true);
@@ -102,6 +104,27 @@ export class CommentSystem {
   }
 
   isPanelMode(): boolean { return this.panelMode; }
+
+  suspendDisplay() {
+    if (this.suspended) return;
+    this.suspended = true;
+    this.cards.forEach(card => card.style.display = 'none');
+    if (this.panel) this.panel.style.display = 'none';
+    this.markers.forEach(marker => marker.style.display = 'none');
+    this.hidePlusIcon();
+  }
+
+  resumeDisplay() {
+    if (!this.suspended) return;
+    this.suspended = false;
+    this.markers.forEach(marker => marker.style.display = '');
+    if (this.panelMode) {
+      if (this.panel) this.panel.style.display = 'block';
+    } else {
+      this.cards.forEach(card => card.style.display = 'block');
+      this.repositionCards();
+    }
+  }
 
   togglePanel() {
     this.panelMode = !this.panelMode;
@@ -159,6 +182,7 @@ export class CommentSystem {
 
   private handleMouseMove(e: MouseEvent) {
     if (!this.active) return;
+    if (this.suspended) return;
     const target = e.target as HTMLElement;
     if (this.plusIcon && this.plusIcon.style.display === 'flex') {
       const px = parseFloat(this.plusIcon.style.left);
@@ -457,7 +481,7 @@ export class CommentSystem {
   }
 
   private repositionCards() {
-    if (this.panelMode) return;
+    if (this.panelMode || this.suspended) return;
     const sorted = Array.from(this.cards.entries())
       .map(([id, card]) => {
         const note = this.noteManager.getNote(id) as CommentNote;
