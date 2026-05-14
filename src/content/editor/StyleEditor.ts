@@ -3,6 +3,8 @@ import { StylePanel } from '../ui/StylePanel';
 
 export class StyleEditor {
   private stylePanel: StylePanel;
+  private showCallbacks: Array<() => void> = [];
+  private hideCallbacks: Array<() => void> = [];
 
   constructor(
     private history: History,
@@ -19,13 +21,22 @@ export class StyleEditor {
     });
   }
 
-  showForElement(element: HTMLElement) { this.stylePanel.show(element); }
-  hide() { this.stylePanel.hide(); }
+  showForElement(element: HTMLElement) {
+    this.showCallbacks.forEach(cb => cb());
+    this.stylePanel.show(element);
+  }
+  hide() {
+    this.stylePanel.hide();
+    this.hideCallbacks.forEach(cb => cb());
+  }
 
   destroy() {
     this.stylePanel.hide();
     this.stylePanel.getElement().remove();
   }
+
+  onShow(callback: () => void) { this.showCallbacks.push(callback); }
+  onHide(callback: () => void) { this.hideCallbacks.push(callback); }
 
   previewStyleOnElement(element: HTMLElement, prop: string, value: string) {
     (element.style as any)[prop] = value;
