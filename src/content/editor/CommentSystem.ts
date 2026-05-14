@@ -39,6 +39,7 @@ export class CommentSystem {
   private scrollHandler: () => void;
   private scrollThrottleId: number | null = null;
   private suspended = false;
+  private beforeAddCallbacks: Array<() => void> = [];
 
   constructor(
     private noteManager: NoteManager,
@@ -126,6 +127,8 @@ export class CommentSystem {
     }
   }
 
+  onBeforeAdd(callback: () => void) { this.beforeAddCallbacks.push(callback); }
+
   togglePanel() {
     this.panelMode = !this.panelMode;
     if (this.panelMode) this.showPanel();
@@ -165,6 +168,7 @@ export class CommentSystem {
     if (!selection || selection.isCollapsed || !selection.rangeCount) return;
     const text = selection.toString().trim();
     if (!text) return;
+    this.beforeAddCallbacks.forEach(cb => cb());
     const range = selection.getRangeAt(0);
     const selector = getCSSPath(range.startContainer);
     const note = this.noteManager.addComment({
@@ -221,6 +225,7 @@ export class CommentSystem {
   private hidePlusIcon() { if (this.plusIcon) this.plusIcon.style.display = 'none'; }
 
   private addParagraphComment(el: HTMLElement) {
+    this.beforeAddCallbacks.forEach(cb => cb());
     const selector = getCSSPath(el);
     const existing = (this.noteManager.getNotesByType('comment') as CommentNote[])
       .find((n) => n.anchor === 'paragraph' && n.selector === selector);

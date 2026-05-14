@@ -79,6 +79,9 @@ export class Engine {
     this.styleEditor.onHide(() => {
       if (this.commentsActive) this.commentSystem.resumeDisplay();
     });
+    this.commentSystem.onBeforeAdd(() => {
+      this.styleEditor.hide();
+    });
 
     this.keydownHandler = this.handleKeydown.bind(this);
     this.contextmenuHandler = this.handleContextMenu.bind(this);
