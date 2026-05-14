@@ -19,6 +19,9 @@ export class StyleEditor {
     this.stylePanel.onChange((element, prop, value) => {
       this.applyStyleToElement(element, prop, value);
     });
+    this.stylePanel.onHide(() => {
+      this.hideCallbacks.forEach(cb => cb());
+    });
   }
 
   showForElement(element: HTMLElement) {
@@ -29,6 +32,8 @@ export class StyleEditor {
     this.stylePanel.hide();
     this.hideCallbacks.forEach(cb => cb());
   }
+
+  isVisible(): boolean { return this.stylePanel.isVisible(); }
 
   destroy() {
     this.stylePanel.hide();

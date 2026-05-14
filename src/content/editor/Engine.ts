@@ -137,6 +137,7 @@ export class Engine {
           if (this.commentsActive) {
             this.commentSystem.activate();
             this.stickyRenderer.activate();
+            if (this.styleEditor.isVisible()) this.commentSystem.suspendDisplay();
           } else {
             this.commentSystem.deactivate();
             this.stickyRenderer.deactivate();
@@ -156,6 +157,7 @@ export class Engine {
             this.toolbar.updateCommentsButton(true);
             this.commentSystem.activate();
             this.stickyRenderer.activate();
+            if (this.styleEditor.isVisible()) this.commentSystem.suspendDisplay();
           }
           this.stickyRenderer.createSticky();
           break;
@@ -220,6 +222,7 @@ export class Engine {
             this.toolbar.updateCommentsButton(true);
             this.commentSystem.activate();
             this.stickyRenderer.activate();
+            if (this.styleEditor.isVisible()) this.commentSystem.suspendDisplay();
           }
           this.commentSystem.addFromContextMenu(target);
           break;
@@ -229,6 +232,7 @@ export class Engine {
             this.toolbar.updateCommentsButton(true);
             this.commentSystem.activate();
             this.stickyRenderer.activate();
+            if (this.styleEditor.isVisible()) this.commentSystem.suspendDisplay();
           }
           this.stickyRenderer.createSticky();
           break;

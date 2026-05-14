@@ -240,6 +240,9 @@ export class CommentSystem {
       const card = this.cards.get(note.id);
       if (card) card.style.display = 'none';
       this.refreshPanel();
+    } else if (this.suspended) {
+      const card = this.cards.get(note.id);
+      if (card) card.style.display = 'none';
     }
   }
 
@@ -430,6 +433,7 @@ export class CommentSystem {
       if (panelItem) panelItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
+    if (this.suspended) return;
     card.style.display = 'block';
     const lastEntry = card.querySelector('.comment-entries')?.lastElementChild as HTMLElement;
     if (lastEntry) {
@@ -439,6 +443,7 @@ export class CommentSystem {
   }
 
   private focusComment(noteId: string) {
+    if (this.suspended) return;
     if (this.panelMode) {
       const panelItem = this.panel?.querySelector(`[data-panel-comment="${noteId}"]`);
       if (panelItem) panelItem.scrollIntoView({ behavior: 'smooth', block: 'center' });

@@ -27,6 +27,7 @@ export class StylePanel {
   private currentElement: HTMLElement | null = null;
   private onChangeCallbacks: Array<(element: HTMLElement, prop: string, value: string) => void> = [];
   private onPreviewCallbacks: Array<(element: HTMLElement, prop: string, value: string) => void> = [];
+  private onHideCallbacks: Array<() => void> = [];
 
   constructor(private shadowRoot: ShadowRoot) {
     this.panel = document.createElement('div');
@@ -35,7 +36,10 @@ export class StylePanel {
     const header = document.createElement('div');
     header.className = 'style-panel-header';
     header.innerHTML = `<span>样式编辑</span><button class="style-panel-close">&times;</button>`;
-    header.querySelector('.style-panel-close')!.addEventListener('click', () => this.hide());
+    header.querySelector('.style-panel-close')!.addEventListener('click', () => {
+      this.hide();
+      this.onHideCallbacks.forEach(cb => cb());
+    });
 
     this.fieldsContainer = document.createElement('div');
     this.fieldsContainer.className = 'style-panel-fields';
@@ -81,6 +85,10 @@ export class StylePanel {
   }
 
   hide() { this.panel.classList.remove('visible'); this.currentElement = null; }
+
+  isVisible(): boolean { return this.panel.classList.contains('visible'); }
+
+  onHide(callback: () => void) { this.onHideCallbacks.push(callback); }
 
   onChange(callback: (element: HTMLElement, prop: string, value: string) => void) {
     this.onChangeCallbacks.push(callback);
