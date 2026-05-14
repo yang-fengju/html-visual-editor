@@ -52,24 +52,30 @@ export type InsertableElement =
   | 'form-checkbox' | 'form-radio' | 'form-button'
   | 'code-block';
 
-// 笔记基础类型
-export interface NoteBase {
+// 评论条目
+export interface CommentEntry {
   id: string;
-  type: 'annotation' | 'sticky' | 'sidenote';
   content: string;
+  createdAt: number;
+}
+
+// 统一评论（替代 annotation + sidenote）
+export interface CommentNote {
+  id: string;
+  type: 'comment';
+  anchor: 'text' | 'paragraph';
+  selector: string;
+  textContent?: string;
+  startOffset?: number;
+  endOffset?: number;
+  entries: CommentEntry[];
   createdAt: number;
   updatedAt: number;
 }
 
-export interface AnnotationNote extends NoteBase {
-  type: 'annotation';
-  selector: string;
-  textContent: string;
-  startOffset: number;
-  endOffset: number;
-}
-
-export interface StickyNoteData extends NoteBase {
+// 便签保留不变
+export interface StickyNoteData {
+  id: string;
   type: 'sticky';
   x: number;
   y: number;
@@ -77,14 +83,12 @@ export interface StickyNoteData extends NoteBase {
   height: number;
   color: 'yellow' | 'green' | 'blue' | 'pink';
   minimized: boolean;
+  content: string;
+  createdAt: number;
+  updatedAt: number;
 }
 
-export interface SideNoteData extends NoteBase {
-  type: 'sidenote';
-  selector: string;
-}
-
-export type Note = AnnotationNote | StickyNoteData | SideNoteData;
+export type Note = CommentNote | StickyNoteData;
 
 export interface PageNotes {
   url: string;
