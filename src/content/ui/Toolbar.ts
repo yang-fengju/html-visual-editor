@@ -2,7 +2,7 @@ export type ToolbarAction =
   | 'undo' | 'redo'
   | 'insert' | 'export' | 'export-with-notes' | 'export-notes-json' | 'import-notes-json'
   | 'copy-html'
-  | 'toggle-notes' | 'add-sticky'
+  | 'toggle-comments' | 'toggle-panel' | 'add-sticky'
   | 'exit';
 
 export class Toolbar {
@@ -22,8 +22,9 @@ export class Toolbar {
         <button data-action="redo" title="重做 (Ctrl+Y)" disabled>&#8631; 重做</button>
       </div>
       <div class="toolbar-right">
-        <button data-action="toggle-notes" title="显示/隐藏笔记">&#128221; 笔记</button>
+        <button data-action="toggle-comments" title="显示/隐藏笔记">&#128172; 评论</button>
         <button data-action="add-sticky" title="添加便签">&#128204; 便签</button>
+        <button data-action="toggle-panel" title="评论面板" style="display:none">&#128203; 面板</button>
         <button data-action="insert" title="插入元素">+ 插入</button>
         <button data-action="copy-html" title="复制 HTML">复制</button>
         <div class="export-dropdown">
@@ -93,8 +94,16 @@ export class Toolbar {
     this.onActionCallbacks.push(callback);
   }
 
-  updateNotesButton(active: boolean) {
-    const btn = this.toolbar.querySelector('[data-action="toggle-notes"]') as HTMLButtonElement;
+  updateCommentsButton(active: boolean) {
+    const btn = this.toolbar.querySelector('[data-action="toggle-comments"]') as HTMLButtonElement;
     if (btn) btn.classList.toggle('notes-active', active);
+  }
+
+  updatePanelButton(visible: boolean, active: boolean) {
+    const btn = this.toolbar.querySelector('[data-action="toggle-panel"]') as HTMLButtonElement;
+    if (btn) {
+      btn.style.display = visible ? '' : 'none';
+      btn.classList.toggle('notes-active', active);
+    }
   }
 }

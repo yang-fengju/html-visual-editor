@@ -1,7 +1,7 @@
 export type ContextAction =
   | 'copy' | 'delete' | 'move-up' | 'move-down'
   | 'copy-html-element' | 'edit-text'
-  | 'add-annotation' | 'add-sticky' | 'add-sidenote';
+  | 'add-comment' | 'add-sticky';
 
 interface MenuItem { label: string; action: ContextAction; icon: string; }
 
@@ -12,9 +12,8 @@ const MENU_ITEMS: MenuItem[] = [
   { label: '上移', action: 'move-up', icon: '&uarr;' },
   { label: '下移', action: 'move-down', icon: '&darr;' },
   { label: '删除', action: 'delete', icon: '&#10005;' },
-  { label: '添加批注', action: 'add-annotation', icon: '&#9998;' },
+  { label: '添加评论', action: 'add-comment', icon: '&#128172;' },
   { label: '添加便签', action: 'add-sticky', icon: '&#128204;' },
-  { label: '添加段落笔记', action: 'add-sidenote', icon: '&#128221;' },
 ];
 
 export class ContextMenu {
