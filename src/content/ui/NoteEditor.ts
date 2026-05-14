@@ -35,6 +35,7 @@ export class NoteEditor {
   private preview: HTMLDivElement;
   private onSaveCallbacks: Array<(content: string) => void> = [];
   private onCloseCallbacks: Array<() => void> = [];
+  private autoSaveTimer: number | null = null;
 
   constructor() {
     this.container = document.createElement('div');
@@ -57,6 +58,9 @@ export class NoteEditor {
     });
 
     this.textarea.addEventListener('blur', () => {
+      // 立即保存
+      if (this.autoSaveTimer !== null) { clearTimeout(this.autoSaveTimer); this.autoSaveTimer = null; }
+      this.onSaveCallbacks.forEach((cb) => cb(this.textarea.value));
       this.updatePreview();
       if (this.textarea.value.trim()) {
         this.textarea.style.display = 'none';
@@ -67,7 +71,7 @@ export class NoteEditor {
     this.textarea.addEventListener('keydown', (e) => {
       if (e.ctrlKey && e.key === 'Enter') {
         e.preventDefault();
-        this.onSaveCallbacks.forEach((cb) => cb(this.textarea.value));
+        this.textarea.blur(); // 完成编辑并折叠
       }
       if (e.key === 'Escape') {
         e.preventDefault();
@@ -76,8 +80,15 @@ export class NoteEditor {
     });
 
     this.textarea.addEventListener('input', () => {
+      // 自动扩展高度
       this.textarea.style.height = 'auto';
       this.textarea.style.height = Math.max(60, this.textarea.scrollHeight) + 'px';
+      // 防抖自动保存
+      if (this.autoSaveTimer !== null) clearTimeout(this.autoSaveTimer);
+      this.autoSaveTimer = window.setTimeout(() => {
+        this.onSaveCallbacks.forEach((cb) => cb(this.textarea.value));
+        this.autoSaveTimer = null;
+      }, 500);
     });
 
     this.preview.addEventListener('click', () => {
