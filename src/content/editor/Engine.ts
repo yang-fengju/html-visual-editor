@@ -9,9 +9,8 @@ import { MediaManager } from './MediaManager';
 import { FormEditor } from './FormEditor';
 import { CodeBlockManager } from './CodeBlock';
 import { NoteManager } from './NoteManager';
-import { Annotator } from './Annotator';
+import { CommentSystem } from './CommentSystem';
 import { StickyNoteRenderer } from './StickyNote';
-import { SideNoteRenderer } from './SideNote';
 import { Toolbar, type ToolbarAction } from '../ui/Toolbar';
 import { ContextMenu, type ContextAction } from '../ui/ContextMenu';
 import { InsertPanel } from '../ui/InsertPanel';
@@ -30,10 +29,9 @@ export class Engine {
   private formEditor: FormEditor;
   private codeBlock: CodeBlockManager;
   private noteManager: NoteManager;
-  private annotator: Annotator;
+  private commentSystem: CommentSystem;
   private stickyRenderer: StickyNoteRenderer;
-  private sideNoteRenderer: SideNoteRenderer;
-  private notesActive = false;
+  private commentsActive = false;
   private toolbar: Toolbar;
   private contextMenu: ContextMenu;
   private insertPanel: InsertPanel;
@@ -67,9 +65,8 @@ export class Engine {
     container.appendChild(this.insertPanel.getElement());
 
     this.noteManager = new NoteManager();
-    this.annotator = new Annotator(this.noteManager, shadowRoot, container);
+    this.commentSystem = new CommentSystem(this.noteManager, shadowRoot, container);
     this.stickyRenderer = new StickyNoteRenderer(this.noteManager, shadowRoot, container);
-    this.sideNoteRenderer = new SideNoteRenderer(this.noteManager, shadowRoot, container);
 
     this.setupToolbarActions();
     this.setupContextMenuActions();
@@ -85,6 +82,15 @@ export class Engine {
       this.toolbar.updateUndoRedo(this.history.canUndo, this.history.canRedo);
     });
 
+    this.noteManager.onChange(() => {
+      if (this.commentsActive) {
+        this.toolbar.updatePanelButton(
+          this.commentSystem.getCommentCount() >= 5,
+          this.commentSystem.isPanelMode()
+        );
+      }
+    });
+
     this.originalMarginTop = document.body.style.marginTop;
     document.body.style.marginTop = '48px';
     this.selectionManager.activate();
@@ -98,9 +104,8 @@ export class Engine {
     this.tableEditor.deactivate();
     this.contextMenu.destroy();
     this.history.clear();
-    this.annotator.destroy();
+    this.commentSystem.destroy();
     this.stickyRenderer.destroy();
-    this.sideNoteRenderer.destroy();
     this.noteManager.destroy();
     document.removeEventListener('keydown', this.keydownHandler);
     document.removeEventListener('contextmenu', this.contextmenuHandler);
@@ -119,26 +124,31 @@ export class Engine {
         case 'copy-html':
           chrome.runtime.sendMessage({ type: 'COPY_HTML' });
           break;
-        case 'toggle-notes':
-          this.notesActive = !this.notesActive;
-          this.toolbar.updateNotesButton(this.notesActive);
-          if (this.notesActive) {
-            this.annotator.activate();
+        case 'toggle-comments':
+          this.commentsActive = !this.commentsActive;
+          this.toolbar.updateCommentsButton(this.commentsActive);
+          if (this.commentsActive) {
+            this.commentSystem.activate();
             this.stickyRenderer.activate();
-            this.sideNoteRenderer.activate();
           } else {
-            this.annotator.deactivate();
+            this.commentSystem.deactivate();
             this.stickyRenderer.deactivate();
-            this.sideNoteRenderer.deactivate();
           }
+          this.toolbar.updatePanelButton(
+            this.commentsActive && this.commentSystem.getCommentCount() >= 5,
+            this.commentSystem.isPanelMode()
+          );
+          break;
+        case 'toggle-panel':
+          this.commentSystem.togglePanel();
+          this.toolbar.updatePanelButton(true, this.commentSystem.isPanelMode());
           break;
         case 'add-sticky':
-          if (!this.notesActive) {
-            this.notesActive = true;
-            this.toolbar.updateNotesButton(true);
-            this.annotator.activate();
+          if (!this.commentsActive) {
+            this.commentsActive = true;
+            this.toolbar.updateCommentsButton(true);
+            this.commentSystem.activate();
             this.stickyRenderer.activate();
-            this.sideNoteRenderer.activate();
           }
           this.stickyRenderer.createSticky();
           break;
@@ -169,10 +179,9 @@ export class Engine {
             const reader = new FileReader();
             reader.onload = (e) => {
               this.noteManager.importJSON(e.target!.result as string);
-              if (this.notesActive) {
-                this.annotator.renderAll();
+              if (this.commentsActive) {
+                this.commentSystem.renderAll();
                 this.stickyRenderer.renderAll();
-                this.sideNoteRenderer.renderAll();
               }
             };
             reader.readAsText(file);
@@ -198,35 +207,23 @@ export class Engine {
         case 'delete': this.elementManager.deleteElement(target); break;
         case 'move-up': this.elementManager.moveElement(target, 'up'); break;
         case 'move-down': this.elementManager.moveElement(target, 'down'); break;
-        case 'add-annotation':
-          if (!this.notesActive) {
-            this.notesActive = true;
-            this.toolbar.updateNotesButton(true);
-            this.annotator.activate();
+        case 'add-comment':
+          if (!this.commentsActive) {
+            this.commentsActive = true;
+            this.toolbar.updateCommentsButton(true);
+            this.commentSystem.activate();
             this.stickyRenderer.activate();
-            this.sideNoteRenderer.activate();
           }
-          this.annotator.addAnnotationFromSelection();
+          this.commentSystem.addFromContextMenu(target);
           break;
         case 'add-sticky':
-          if (!this.notesActive) {
-            this.notesActive = true;
-            this.toolbar.updateNotesButton(true);
-            this.annotator.activate();
+          if (!this.commentsActive) {
+            this.commentsActive = true;
+            this.toolbar.updateCommentsButton(true);
+            this.commentSystem.activate();
             this.stickyRenderer.activate();
-            this.sideNoteRenderer.activate();
           }
           this.stickyRenderer.createSticky();
-          break;
-        case 'add-sidenote':
-          if (!this.notesActive) {
-            this.notesActive = true;
-            this.toolbar.updateNotesButton(true);
-            this.annotator.activate();
-            this.stickyRenderer.activate();
-            this.sideNoteRenderer.activate();
-          }
-          this.sideNoteRenderer.addSideNote(target);
           break;
       }
     });
