@@ -22,6 +22,7 @@ function formatTime(ts: number): string {
 }
 
 const BLOCK_TAGS = new Set(['P','H1','H2','H3','H4','H5','H6','DIV','SECTION','ARTICLE','BLOCKQUOTE','LI','PRE','FIGCAPTION']);
+const BLOCK_SELECTOR = Array.from(BLOCK_TAGS).map(t => t.toLowerCase()).join(',');
 
 export class CommentSystem {
   private highlights: Map<string, HTMLElement[]> = new Map();
@@ -73,6 +74,7 @@ export class CommentSystem {
     this.commentBtn.style.display = 'none';
     document.removeEventListener('mousemove', this.mouseMoveHandler);
     document.removeEventListener('scroll', this.scrollHandler, true);
+    if (this.scrollThrottleId !== null) { cancelAnimationFrame(this.scrollThrottleId); this.scrollThrottleId = null; }
     this.hidePlusIcon();
     this.clearAll();
     if (this.panel) { this.panel.remove(); this.panel = null; }
@@ -124,9 +126,10 @@ export class CommentSystem {
     }
     const text = selection.toString().trim();
     if (!text) { this.commentBtn.style.display = 'none'; return; }
-    const anchor = selection.anchorNode;
-    if (anchor && (anchor as HTMLElement).closest?.('html-visual-editor')) return;
-    if (anchor && (anchor as HTMLElement).closest?.('[data-editor-dialog]')) return;
+    const anchorNode = selection.anchorNode;
+    const anchorEl = anchorNode?.nodeType === Node.TEXT_NODE ? anchorNode.parentElement : anchorNode as HTMLElement;
+    if (anchorEl?.closest('html-visual-editor')) return;
+    if (anchorEl?.closest('[data-editor-dialog]')) return;
     const range = selection.getRangeAt(0);
     const rect = range.getBoundingClientRect();
     this.commentBtn.style.display = 'block';
@@ -166,8 +169,7 @@ export class CommentSystem {
     if (target.closest('html-visual-editor') || target.closest('[data-editor-dialog]')) {
       this.hidePlusIcon(); return;
     }
-    const blockTags = Array.from(BLOCK_TAGS).map(t => t.toLowerCase()).join(',');
-    const block = target.closest(blockTags) as HTMLElement | null;
+    const block = target.closest(BLOCK_SELECTOR) as HTMLElement | null;
     if (!block) { this.hidePlusIcon(); return; }
     this.showPlusIcon(block);
   }
@@ -363,11 +365,13 @@ export class CommentSystem {
       save();
       textarea.remove();
       contentEl.style.display = '';
-      contentEl.innerHTML = textarea.value.trim() ? renderMarkdown(textarea.value) : '<span style="color:#aaa">点击编辑...</span>';
-      contentEl.addEventListener('click', (e) => {
+      const newContentEl = contentEl.cloneNode(false) as HTMLDivElement;
+      newContentEl.innerHTML = textarea.value.trim() ? renderMarkdown(textarea.value) : '<span style="color:#aaa">点击编辑...</span>';
+      newContentEl.addEventListener('click', (e) => {
         e.stopPropagation();
         this.editEntry(noteId, entryId, entryEl);
       });
+      contentEl.replaceWith(newContentEl);
     });
 
     textarea.addEventListener('keydown', (e) => {

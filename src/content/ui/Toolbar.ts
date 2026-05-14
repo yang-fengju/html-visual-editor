@@ -22,7 +22,7 @@ export class Toolbar {
         <button data-action="redo" title="重做 (Ctrl+Y)" disabled>&#8631; 重做</button>
       </div>
       <div class="toolbar-right">
-        <button data-action="toggle-comments" title="显示/隐藏笔记">&#128172; 评论</button>
+        <button data-action="toggle-comments" title="显示/隐藏评论">&#128172; 评论</button>
         <button data-action="add-sticky" title="添加便签">&#128204; 便签</button>
         <button data-action="toggle-panel" title="评论面板" style="display:none">&#128203; 面板</button>
         <button data-action="insert" title="插入元素">+ 插入</button>
