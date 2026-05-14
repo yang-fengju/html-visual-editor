@@ -73,6 +73,13 @@ export class Engine {
     this.setupInsertActions();
     this.setupSelectionActions();
 
+    this.styleEditor.onShow(() => {
+      if (this.commentsActive) this.commentSystem.suspendDisplay();
+    });
+    this.styleEditor.onHide(() => {
+      if (this.commentsActive) this.commentSystem.resumeDisplay();
+    });
+
     this.keydownHandler = this.handleKeydown.bind(this);
     this.contextmenuHandler = this.handleContextMenu.bind(this);
     document.addEventListener('keydown', this.keydownHandler);
