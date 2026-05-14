@@ -73,7 +73,7 @@ chrome.runtime.onMessage.addListener(
         });
 
         // 对批注 mark 标签做 unwrap：保留内部文字，移除 mark 包装
-        const noteMarks = document.querySelectorAll('mark[data-editor-note-ref]');
+        const noteMarks = document.querySelectorAll('mark[data-comment-ref]');
         const unwrappedMarks: Array<{ mark: Element; parent: Node; textNodes: Text[]; beforeNode: Node | null }> = [];
         noteMarks.forEach((mark) => {
           const parent = mark.parentNode;
@@ -146,7 +146,7 @@ chrome.runtime.onMessage.addListener(
             el.remove();
           }
         });
-        const noteMarksExport = document.querySelectorAll('mark[data-editor-note-ref]');
+        const noteMarksExport = document.querySelectorAll('mark[data-comment-ref]');
         const unwrappedMarksExport: Array<{ mark: Element; parent: Node; textNodes: Text[]; beforeNode: Node | null }> = [];
         noteMarksExport.forEach((mark) => {
           const parent = mark.parentNode;
