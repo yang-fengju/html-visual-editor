@@ -1,7 +1,7 @@
 {
   "name": "html-visual-editor",
-  "version": "1.0.0",
-  "description": "",
+  "version": "0.1.0",
+  "description": "A Chrome extension that lets you visually edit any webpage like a Word document",
   "main": "index.js",
   "directories": {
     "doc": "docs"
@@ -11,9 +11,19 @@
     "build": "node build.mjs",
     "preview": "vite preview"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "chrome-extension",
+    "html-editor",
+    "visual-editor",
+    "wysiwyg",
+    "web-editor"
+  ],
+  "author": "yang-fengju",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yang-fengju/html-visual-editor.git"
+  },
   "type": "commonjs",
   "devDependencies": {
     "@crxjs/vite-plugin": "^2.0.0-beta.33",
