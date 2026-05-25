@@ -8,6 +8,7 @@ export class SelectionManager {
   private selectedElement: HTMLElement | null = null;
   private onSelectCallbacks: Array<(el: HTMLElement | null) => void> = [];
   private onDblClickCallbacks: Array<(el: HTMLElement) => void> = [];
+  private passThroughCheck: ((el: HTMLElement) => boolean) | null = null;
   private active = false;
   private lastHoveredElement: HTMLElement | null = null;
   private mouseLeaveHandler: () => void;
@@ -110,10 +111,17 @@ export class SelectionManager {
     this.selectOverlay.remove();
   }
 
+  // 设置回调：返回 true 时不拦截点击（让 contentEditable 正常处理光标定位）
+  onPassThrough(check: (el: HTMLElement) => boolean) {
+    this.passThroughCheck = check;
+  }
+
   private handleClick = (e: MouseEvent) => {
     if (!this.active) return;
     const target = e.target as HTMLElement;
     if (this.shouldSkip(target)) return;
+    // 编辑态下点击正在编辑的元素内部，不拦截
+    if (this.passThroughCheck?.(target)) return;
     e.preventDefault();
     e.stopPropagation();
     this.selectedElement = target;

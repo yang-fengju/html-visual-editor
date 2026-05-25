@@ -38,7 +38,6 @@ export class StylePanel {
     header.innerHTML = `<span>样式编辑</span><button class="style-panel-close">&times;</button>`;
     header.querySelector('.style-panel-close')!.addEventListener('click', () => {
       this.hide();
-      this.onHideCallbacks.forEach(cb => cb());
     });
 
     this.fieldsContainer = document.createElement('div');
@@ -84,7 +83,12 @@ export class StylePanel {
     this.panel.classList.add('visible');
   }
 
-  hide() { this.panel.classList.remove('visible'); this.currentElement = null; }
+  hide() {
+    if (!this.panel.classList.contains('visible')) return;
+    this.panel.classList.remove('visible');
+    this.currentElement = null;
+    this.onHideCallbacks.forEach(cb => cb());
+  }
 
   isVisible(): boolean { return this.panel.classList.contains('visible'); }
 

@@ -12,7 +12,7 @@ const MENU_ITEMS: MenuItem[] = [
   { label: '上移', action: 'move-up', icon: '&uarr;' },
   { label: '下移', action: 'move-down', icon: '&darr;' },
   { label: '删除', action: 'delete', icon: '&#10005;' },
-  { label: '添加评论', action: 'add-comment', icon: '&#128172;' },
+  { label: '添加笔记', action: 'add-comment', icon: '&#128172;' },
   { label: '添加便签', action: 'add-sticky', icon: '&#128204;' },
 ];
 

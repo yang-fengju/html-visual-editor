@@ -217,7 +217,7 @@ mark[data-comment-ref]{background:rgba(255,213,79,0.4);padding:1px 0;border-radi
 </style>\n`;
     for (const note of this.notes) {
       if (note.type === 'comment') {
-        const typeLabel = note.anchor === 'text' ? '文字评论' : '段落评论';
+        const typeLabel = note.anchor === 'text' ? '文字笔记' : '段落笔记';
         const noteType = note.anchor === 'text' ? 'comment-text' : 'comment-paragraph';
         let entriesHtml = '';
         for (const entry of note.entries) {

@@ -47,12 +47,11 @@ export class CommentSystem {
     private container: HTMLDivElement
   ) {
     this.commentBtn = document.createElement('div');
-    this.commentBtn.setAttribute('data-editor-dialog', '');
     this.commentBtn.style.cssText = `position:fixed;display:none;background:#4285f4;color:white;padding:4px 12px;border-radius:4px;font-size:12px;cursor:pointer;z-index:2147483647;box-shadow:0 2px 8px rgba(0,0,0,0.2);pointer-events:auto;user-select:none;`;
-    this.commentBtn.textContent = '+ 评论';
+    this.commentBtn.textContent = '+ 笔记';
     this.commentBtn.addEventListener('mousedown', (e) => { e.preventDefault(); e.stopPropagation(); });
     this.commentBtn.addEventListener('click', (e) => { e.stopPropagation(); this.addFromSelection(); });
-    document.body.appendChild(this.commentBtn);
+    this.container.appendChild(this.commentBtn);
 
     const style = document.createElement('style');
     style.textContent = this.getStyles();
@@ -305,7 +304,7 @@ export class CommentSystem {
     header.className = 'comment-card-header';
     const typeLabel = document.createElement('span');
     typeLabel.className = 'comment-type-label';
-    typeLabel.textContent = note.anchor === 'text' ? '文字评论' : '段落评论';
+    typeLabel.textContent = note.anchor === 'text' ? '文字笔记' : '段落笔记';
     header.appendChild(typeLabel);
 
     if (note.anchor === 'text' && note.textContent) {
@@ -321,7 +320,7 @@ export class CommentSystem {
     addBtn.textContent = '+'; addBtn.title = '追加笔记';
     addBtn.addEventListener('click', (e) => { e.stopPropagation(); this.addEntry(note.id); });
     const delBtn = document.createElement('button');
-    delBtn.textContent = '×'; delBtn.title = '删除评论';
+    delBtn.textContent = '×'; delBtn.title = '删除笔记';
     delBtn.addEventListener('click', (e) => { e.stopPropagation(); this.deleteComment(note.id); });
     actions.appendChild(addBtn);
     actions.appendChild(delBtn);
@@ -558,7 +557,7 @@ export class CommentSystem {
     header.className = 'comment-panel-header';
     const title = document.createElement('span');
     title.className = 'comment-panel-title';
-    title.textContent = `全部评论 (${comments.length})`;
+    title.textContent = `全部笔记 (${comments.length})`;
     const switchBtn = document.createElement('span');
     switchBtn.className = 'comment-panel-switch';
     switchBtn.textContent = '切换内联';
@@ -578,7 +577,7 @@ export class CommentSystem {
       const itemHeader = document.createElement('div');
       itemHeader.className = 'comment-panel-item-header';
       const itemType = document.createElement('span');
-      itemType.textContent = note.anchor === 'text' ? '文字评论' : '段落评论';
+      itemType.textContent = note.anchor === 'text' ? '文字笔记' : '段落笔记';
       itemHeader.appendChild(itemType);
       if (note.anchor === 'text' && note.textContent) {
         const quoted = document.createElement('div');

@@ -107,7 +107,12 @@ export class FormEditor {
       });
       const afterHTML = element.outerHTML;
       if (beforeHTML !== afterHTML) {
-        this.history.push('form-change', () => { element.outerHTML = beforeHTML; }, () => { element.outerHTML = afterHTML; });
+        const parent = element.parentElement!;
+        const index = Array.from(parent.children).indexOf(element);
+        this.history.push('form-change',
+          () => { parent.children[index].outerHTML = beforeHTML; },
+          () => { parent.children[index].outerHTML = afterHTML; }
+        );
       }
       cleanup();
     });

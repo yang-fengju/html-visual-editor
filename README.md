@@ -108,7 +108,6 @@ src/
 │       ├── ShadowHost.ts
 │       ├── Toolbar.ts
 │       ├── ContextMenu.ts
-│       ├── FloatingBar.ts
 │       ├── InsertPanel.ts
 │       ├── StylePanel.ts
 │       ├── TableToolbar.ts

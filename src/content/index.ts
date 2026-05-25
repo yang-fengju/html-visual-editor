@@ -3,6 +3,66 @@ import type { EditorMode } from '../shared/types';
 import { ShadowHost } from './ui/ShadowHost';
 import { Engine } from './editor/Engine';
 
+// 在清洁 DOM 环境下执行回调（移除编辑器 DOM，完成后恢复）
+function withCleanDOM<T>(callback: () => T): T {
+  const savedMarginTop = document.body.style.marginTop;
+  document.body.style.marginTop = '';
+
+  const editorHost = document.querySelector('html-visual-editor');
+  editorHost?.remove();
+
+  const overlays = document.querySelectorAll('[style*="z-index: 2147483646"], [style*="z-index: 2147483645"]');
+  const removedOverlays: Array<{ el: Element; parent: Node }> = [];
+  overlays.forEach((el) => {
+    if (el.parentNode) { removedOverlays.push({ el, parent: el.parentNode }); el.remove(); }
+  });
+
+  const editorDialogs = document.querySelectorAll('[data-editor-dialog]');
+  const removedDialogs: Array<{ el: Element; parent: Node; next: Node | null }> = [];
+  editorDialogs.forEach((el) => {
+    if (el.parentNode) {
+      removedDialogs.push({ el, parent: el.parentNode, next: el.nextSibling });
+      el.remove();
+    }
+  });
+
+  // unwrap 笔记高亮 mark 标签：保留内部文字，移除 mark 包装
+  const noteMarks = document.querySelectorAll('mark[data-comment-ref]');
+  const unwrappedMarks: Array<{ mark: Element; parent: Node; innerHTML: string; beforeNode: Node | null }> = [];
+  noteMarks.forEach((mark) => {
+    const parent = mark.parentNode;
+    if (!parent) return;
+    const beforeNode = mark.nextSibling;
+    const innerHTML = mark.innerHTML;
+    while (mark.firstChild) {
+      parent.insertBefore(mark.firstChild, mark);
+    }
+    mark.remove();
+    unwrappedMarks.push({ mark, parent, innerHTML, beforeNode });
+  });
+
+  const result = callback();
+
+  // 恢复 mark 标签（用保存的 innerHTML 重建内容，避免文本节点合并导致引用失效）
+  unwrappedMarks.reverse().forEach(({ mark, parent, innerHTML, beforeNode }) => {
+    mark.innerHTML = innerHTML;
+    if (beforeNode && beforeNode.parentNode === parent) parent.insertBefore(mark, beforeNode);
+    else parent.appendChild(mark);
+  });
+  // 恢复后合并相邻文本节点，清理 unwrap 留下的碎片
+  unwrappedMarks.forEach(({ mark }) => mark.parentNode?.normalize());
+
+  removedDialogs.forEach(({ el, parent, next }) => {
+    if (next && next.parentNode === parent) parent.insertBefore(el, next);
+    else parent.appendChild(el);
+  });
+  removedOverlays.forEach(({ el, parent }) => parent.appendChild(el));
+  if (editorHost) document.documentElement.appendChild(editorHost);
+  document.body.style.marginTop = savedMarginTop;
+
+  return result;
+}
+
 // 单例保护：防止重复注入
 if ((globalThis as any).__htmlVisualEditorLoaded) throw new Error('already loaded');
 (globalThis as any).__htmlVisualEditorLoaded = true;
@@ -53,168 +113,34 @@ chrome.runtime.onMessage.addListener(
         break;
 
       case 'EXPORT_HTML_WITH_NOTES': {
-        const savedMarginTop = document.body.style.marginTop;
-        document.body.style.marginTop = '';
-        const editorHost = document.querySelector('html-visual-editor');
-        editorHost?.remove();
-        const overlays = document.querySelectorAll('[style*="z-index: 2147483646"], [style*="z-index: 2147483645"]');
-        const removedOverlays: Array<{ el: Element; parent: Node }> = [];
-        overlays.forEach((el) => {
-          if (el.parentNode) { removedOverlays.push({ el, parent: el.parentNode }); el.remove(); }
-        });
-        // 移除编辑器弹窗 DOM，但对批注高亮 mark 做 unwrap（保留原文）
-        const editorDialogs = document.querySelectorAll('[data-editor-dialog]');
-        const removedDialogs: Array<{ el: Element; parent: Node; next: Node | null }> = [];
-        editorDialogs.forEach((el) => {
-          if (el.parentNode) {
-            removedDialogs.push({ el, parent: el.parentNode, next: el.nextSibling });
-            el.remove();
+        const html = withCleanDOM(() => {
+          let h = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+          if (engine) {
+            const notesHTML = engine.getNoteManager().generateEmbedHTML();
+            h = h.replace('</body>', notesHTML + '</body>');
           }
+          return h;
         });
-
-        // 对批注 mark 标签做 unwrap：保留内部文字，移除 mark 包装
-        const noteMarks = document.querySelectorAll('mark[data-comment-ref]');
-        const unwrappedMarks: Array<{ mark: Element; parent: Node; textNodes: Text[]; beforeNode: Node | null }> = [];
-        noteMarks.forEach((mark) => {
-          const parent = mark.parentNode;
-          if (!parent) return;
-          const beforeNode = mark.nextSibling;
-          const textNodes: Text[] = [];
-          // 将 mark 的内容提取为文本节点
-          while (mark.firstChild) {
-            const child = mark.firstChild;
-            if (child.nodeType === Node.TEXT_NODE) {
-              textNodes.push(child as Text);
-            }
-            parent.insertBefore(child, mark);
-          }
-          mark.remove();
-          unwrappedMarks.push({ mark, parent, textNodes, beforeNode });
-        });
-
-        let html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
-        if (engine) {
-          const notesHTML = engine.getNoteManager().generateEmbedHTML();
-          html = html.replace('</body>', notesHTML + '</body>');
-        }
-
-        // 恢复批注 mark 标签
-        unwrappedMarks.reverse().forEach(({ mark, parent, textNodes, beforeNode }) => {
-          textNodes.forEach((t) => mark.appendChild(t));
-          if (beforeNode) parent.insertBefore(mark, beforeNode);
-          else parent.appendChild(mark);
-        });
-
-        // 恢复编辑器弹窗 DOM
-        removedDialogs.forEach(({ el, parent, next }) => {
-          if (next) parent.insertBefore(el, next);
-          else parent.appendChild(el);
-        });
-        removedOverlays.forEach(({ el, parent }) => parent.appendChild(el));
-        if (editorHost) document.documentElement.appendChild(editorHost);
-        document.body.style.marginTop = savedMarginTop;
-
         sendResponse({ type: 'HTML_CONTENT', html, title: document.title });
         break;
       }
 
       case 'EXPORT_HTML': {
-        // 保存并清理编辑器状态
-        const savedMarginTop = document.body.style.marginTop;
-        document.body.style.marginTop = '';
-
-        // 移除所有编辑器相关 DOM
-        const editorHost = document.querySelector('html-visual-editor');
-        editorHost?.remove();
-
-        // 移除选择高亮框（它们直接挂在 body 上）
-        const overlays = document.querySelectorAll('[style*="z-index: 2147483646"], [style*="z-index: 2147483645"]');
-        const removedOverlays: Array<{ el: Element; parent: Node }> = [];
-        overlays.forEach((el) => {
-          if (el.parentNode) {
-            removedOverlays.push({ el, parent: el.parentNode });
-            el.remove();
-          }
-        });
-
-        // 清理笔记 DOM（mark 做 unwrap 保留文字，其他直接移除）
-        const editorDialogsExport = document.querySelectorAll('[data-editor-dialog]');
-        const removedDialogsExport: Array<{ el: Element; parent: Node; next: Node | null }> = [];
-        editorDialogsExport.forEach((el) => {
-          if (el.parentNode) {
-            removedDialogsExport.push({ el, parent: el.parentNode, next: el.nextSibling });
-            el.remove();
-          }
-        });
-        const noteMarksExport = document.querySelectorAll('mark[data-comment-ref]');
-        const unwrappedMarksExport: Array<{ mark: Element; parent: Node; textNodes: Text[]; beforeNode: Node | null }> = [];
-        noteMarksExport.forEach((mark) => {
-          const parent = mark.parentNode;
-          if (!parent) return;
-          const beforeNode = mark.nextSibling;
-          const textNodes: Text[] = [];
-          while (mark.firstChild) {
-            const child = mark.firstChild;
-            if (child.nodeType === Node.TEXT_NODE) textNodes.push(child as Text);
-            parent.insertBefore(child, mark);
-          }
-          mark.remove();
-          unwrappedMarksExport.push({ mark, parent, textNodes, beforeNode });
-        });
-
-        const html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
-
-        // 恢复笔记 DOM
-        unwrappedMarksExport.reverse().forEach(({ mark, parent, textNodes, beforeNode }) => {
-          textNodes.forEach((t) => mark.appendChild(t));
-          if (beforeNode) parent.insertBefore(mark, beforeNode);
-          else parent.appendChild(mark);
-        });
-        removedDialogsExport.forEach(({ el, parent, next }) => {
-          if (next) parent.insertBefore(el, next);
-          else parent.appendChild(el);
-        });
-
-        // 恢复所有编辑器 DOM
-        removedOverlays.forEach(({ el, parent }) => parent.appendChild(el));
-        if (editorHost) document.documentElement.appendChild(editorHost);
-        document.body.style.marginTop = savedMarginTop;
-
+        const html = withCleanDOM(() => '<!DOCTYPE html>\n' + document.documentElement.outerHTML);
         sendResponse({ type: 'HTML_CONTENT', html, title: document.title });
         break;
       }
 
       case 'COPY_HTML': {
-        const savedMarginTop = document.body.style.marginTop;
-        document.body.style.marginTop = '';
-
-        const editorHost = document.querySelector('html-visual-editor');
-        editorHost?.remove();
-        const overlays = document.querySelectorAll('[style*="z-index: 2147483646"], [style*="z-index: 2147483645"]');
-        const removedOverlays: Array<{ el: Element; parent: Node }> = [];
-        overlays.forEach((el) => {
-          if (el.parentNode) {
-            removedOverlays.push({ el, parent: el.parentNode });
-            el.remove();
+        const html = withCleanDOM(() => {
+          if (message.selector) {
+            try {
+              const el = document.querySelector(message.selector);
+              return el ? el.outerHTML : '';
+            } catch { return ''; }
           }
+          return '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
         });
-
-        let html: string;
-        if (message.selector) {
-          try {
-            const el = document.querySelector(message.selector);
-            html = el ? el.outerHTML : '';
-          } catch {
-            html = '';
-          }
-        } else {
-          html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
-        }
-
-        removedOverlays.forEach(({ el, parent }) => parent.appendChild(el));
-        if (editorHost) document.documentElement.appendChild(editorHost);
-        document.body.style.marginTop = savedMarginTop;
-
         navigator.clipboard.writeText(html).catch(() => {});
         sendResponse({ type: 'COPY_SUCCESS' });
         break;

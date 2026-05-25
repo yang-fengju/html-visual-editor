@@ -51,12 +51,12 @@ export class Engine {
     this.formEditor = new FormEditor(this.history);
     this.codeBlock = new CodeBlockManager(this.history);
 
-    this.textEditor = new TextEditor(this.history, shadowRoot, container);
-    this.styleEditor = new StyleEditor(this.history, shadowRoot, container);
-    this.tableEditor = new TableEditor(this.history, shadowRoot, container);
-
     this.toolbar = new Toolbar(shadowRoot);
     container.insertBefore(this.toolbar.getElement(), container.firstChild);
+
+    this.textEditor = new TextEditor(this.history, this.toolbar);
+    this.styleEditor = new StyleEditor(this.history, shadowRoot, container);
+    this.tableEditor = new TableEditor(this.history, shadowRoot, container);
 
     this.contextMenu = new ContextMenu(shadowRoot);
     container.appendChild(this.contextMenu.getElement());
@@ -67,6 +67,11 @@ export class Engine {
     this.noteManager = new NoteManager();
     this.commentSystem = new CommentSystem(this.noteManager, shadowRoot, container);
     this.stickyRenderer = new StickyNoteRenderer(this.noteManager, shadowRoot, container);
+
+    this.selectionManager.onPassThrough((el) => {
+      if (this.textEditor.isEditing() && this.textEditor.getEditingElement()?.contains(el)) return true;
+      return false;
+    });
 
     this.setupToolbarActions();
     this.setupContextMenuActions();

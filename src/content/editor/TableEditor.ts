@@ -62,9 +62,11 @@ export class TableEditor {
 
     const afterHTML = table.outerHTML;
     if (beforeHTML !== afterHTML) {
+      const parent = table.parentElement!;
+      const index = Array.from(parent.children).indexOf(table);
       this.history.push('table-structure',
-        () => { table.outerHTML = beforeHTML; },
-        () => { table.outerHTML = afterHTML; }
+        () => { parent.children[index].outerHTML = beforeHTML; },
+        () => { parent.children[index].outerHTML = afterHTML; }
       );
     }
   }

@@ -30,7 +30,6 @@ export class StyleEditor {
   }
   hide() {
     this.stylePanel.hide();
-    this.hideCallbacks.forEach(cb => cb());
   }
 
   isVisible(): boolean { return this.stylePanel.isVisible(); }

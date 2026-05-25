@@ -25,7 +25,6 @@ interface ResizeState {
 export class DragSystem {
   private dragState: DragState | null = null;
   private resizeState: ResizeState | null = null;
-  private guides: HTMLDivElement[] = [];
 
   constructor(private history: History) {
     document.addEventListener('pointermove', this.handlePointerMove);
@@ -44,7 +43,6 @@ export class DragSystem {
     };
     if (computed.position === 'static') element.style.position = 'relative';
     element.style.cursor = 'grabbing';
-    this.showGuides();
   }
 
   startResize(element: HTMLElement, handle: string, startX: number, startY: number) {
@@ -59,7 +57,6 @@ export class DragSystem {
   destroy() {
     document.removeEventListener('pointermove', this.handlePointerMove);
     document.removeEventListener('pointerup', this.handlePointerUp);
-    this.hideGuides();
   }
 
   private handlePointerMove = (e: PointerEvent) => {
@@ -104,7 +101,6 @@ export class DragSystem {
     const afterLeft = el.style.left;
     const afterTop = el.style.top;
     el.style.cursor = '';
-    this.hideGuides();
     this.history.push('element-move',
       () => { el.style.position = state.originalPosition; el.style.left = state.originalLeft; el.style.top = state.originalTop; },
       () => { el.style.position = afterPosition; el.style.left = afterLeft; el.style.top = afterTop; }
@@ -124,18 +120,4 @@ export class DragSystem {
     this.resizeState = null;
   }
 
-  private showGuides() {
-    const hGuide = document.createElement('div');
-    hGuide.style.cssText = `position: fixed; left: 0; width: 100%; height: 1px; top: 50%; background: #ff6b6b; z-index: 2147483646; pointer-events: none; display: none;`;
-    const vGuide = document.createElement('div');
-    vGuide.style.cssText = `position: fixed; top: 0; height: 100%; width: 1px; left: 50%; background: #ff6b6b; z-index: 2147483646; pointer-events: none; display: none;`;
-    document.body.appendChild(hGuide);
-    document.body.appendChild(vGuide);
-    this.guides = [hGuide, vGuide];
-  }
-
-  private hideGuides() {
-    this.guides.forEach((g) => g.remove());
-    this.guides = [];
-  }
 }

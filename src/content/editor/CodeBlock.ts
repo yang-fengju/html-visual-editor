@@ -87,7 +87,12 @@ export class CodeBlockManager {
       this.applyCodeBlock(preElement, codeEl as HTMLElement, code, lang, dark);
       const afterHTML = preElement.outerHTML;
       if (beforeHTML !== afterHTML) {
-        this.history.push('code-block-change', () => { preElement.outerHTML = beforeHTML; }, () => { preElement.outerHTML = afterHTML; });
+        const parent = preElement.parentElement!;
+        const index = Array.from(parent.children).indexOf(preElement);
+        this.history.push('code-block-change',
+          () => { parent.children[index].outerHTML = beforeHTML; },
+          () => { parent.children[index].outerHTML = afterHTML; }
+        );
       }
       cleanup();
     });

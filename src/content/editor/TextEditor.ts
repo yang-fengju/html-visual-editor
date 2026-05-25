@@ -1,24 +1,19 @@
 import { History } from './History';
-import { FloatingBar } from '../ui/FloatingBar';
+import type { Toolbar } from '../ui/Toolbar';
 
 export class TextEditor {
-  private floatingBar: FloatingBar;
   private editingElement: HTMLElement | null = null;
   private originalContent = '';
 
   constructor(
     private history: History,
-    shadowRoot: ShadowRoot,
-    container: HTMLDivElement
+    private toolbar: Toolbar
   ) {
-    this.floatingBar = new FloatingBar(shadowRoot);
-    container.appendChild(this.floatingBar.getElement());
-
-    this.floatingBar.onCommand((cmd, value) => {
+    this.toolbar.onTextCommand((cmd, value) => {
+      const sel = document.getSelection();
+      if (!sel || sel.rangeCount === 0) return;
       document.execCommand(cmd, false, value);
     });
-
-    document.addEventListener('selectionchange', this.handleSelectionChange);
   }
 
   startEditing(element: HTMLElement) {
@@ -48,7 +43,6 @@ export class TextEditor {
     }
     this.editingElement = null;
     this.originalContent = '';
-    this.floatingBar.hide();
   }
 
   isEditing(): boolean { return this.editingElement !== null; }
@@ -56,22 +50,5 @@ export class TextEditor {
 
   destroy() {
     this.stopEditing();
-    document.removeEventListener('selectionchange', this.handleSelectionChange);
-    this.floatingBar.getElement().remove();
   }
-
-  private handleSelectionChange = () => {
-    const selection = document.getSelection();
-    if (!selection || selection.isCollapsed || !this.editingElement) {
-      this.floatingBar.hide();
-      return;
-    }
-    if (!this.editingElement.contains(selection.anchorNode)) {
-      this.floatingBar.hide();
-      return;
-    }
-    const range = selection.getRangeAt(0);
-    const rect = range.getBoundingClientRect();
-    this.floatingBar.show(rect.left + rect.width / 2 - 150, rect.top - 44);
-  };
 }
