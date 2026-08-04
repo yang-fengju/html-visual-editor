@@ -70,13 +70,16 @@ if ((globalThis as any).__htmlVisualEditorLoaded) throw new Error('already loade
 let currentMode: EditorMode = 'browse';
 let shadowHost: ShadowHost | null = null;
 let engine: Engine | null = null;
+const DATA_CONSENT_KEY = 'dataConsentAccepted'; // 使用固定键记录用户是否已同意仅在本机处理当前网页数据。
 
-function enterEditMode() {
-  if (currentMode === 'edit') return;
+function activateEditMode(): void { // 在授权已经成立后创建编辑器，避免提前读取网页内容。
+  if (currentMode === 'edit') return; // 已处于编辑模式时直接返回，防止重复创建工具栏和事件监听器。
   currentMode = 'edit';
 
-  shadowHost = new ShadowHost();
-  shadowHost.mount();
+  if (!shadowHost) { // 从非授权流程进入时需要先创建编辑器的隔离界面容器。
+    shadowHost = new ShadowHost(); // 创建 Shadow DOM 容器，避免编辑器样式与网站样式互相影响。
+    shadowHost.mount(); // 将隔离容器挂载到当前网页，供工具栏和面板使用。
+  } // 授权浮层已经创建容器时复用该容器，减少不必要的 DOM 重建。
 
   const currentHost = shadowHost;
   chrome.storage.local.get('hintDismissed', (result) => {
@@ -86,6 +89,31 @@ function enterEditMode() {
   });
 
   engine = new Engine(shadowHost);
+}
+
+async function enterEditMode(): Promise<ResponseType> { // 在真正启动编辑器前统一检查数据处理授权。
+  if (currentMode === 'edit') return { type: 'EDIT_MODE_STATUS', mode: currentMode }; // 重复开启时返回当前状态，保持消息调用幂等。
+  const storedConsent = await chrome.storage.local.get(DATA_CONSENT_KEY); // 从扩展专用存储读取用户先前的授权选择。
+  if (storedConsent[DATA_CONSENT_KEY] === true) { // 只有明确保存为 true 才视为用户已经同意。
+    activateEditMode(); // 授权有效时立即启动全部现有编辑功能。
+    return { type: 'EDIT_MODE_STATUS', mode: currentMode }; // 把实际模式返回给弹窗，确保开关状态准确。
+  } // 未授权时只展示说明，不初始化会读取网页内容的 Engine。
+  if (!shadowHost) { // 防止用户连续触发开关时重复创建多个授权浮层。
+    shadowHost = new ShadowHost(); // 创建只承载授权界面的隔离容器。
+    shadowHost.mount(); // 将授权界面容器挂载到网页，但此时不读取网页正文。
+    shadowHost.showDataConsent( // 展示数据类型、用途和本地处理方式，并要求用户明确选择。
+      () => { // 用户点击同意后保存选择并开启编辑器。
+        void chrome.storage.local.set({ [DATA_CONSENT_KEY]: true }).then(() => { // 先持久化同意状态，保证后续快捷键无需重复询问。
+          activateEditMode(); // 保存成功后再初始化编辑器，满足先同意后处理的顺序要求。
+        }); // 结束异步保存流程，失败时不会错误地进入编辑模式。
+      }, // 完成同意回调定义。
+      () => { // 用户取消时清理只用于授权的临时界面。
+        shadowHost?.unmount(); // 从网页移除授权浮层及其 Shadow DOM 容器。
+        shadowHost = null; // 清空引用，允许用户下次主动开启时重新查看并选择。
+      }, // 完成取消回调定义。
+    ); // 完成授权浮层初始化。
+  } // 已存在授权浮层时保持原界面，不重复绑定事件。
+  return { type: 'CONSENT_REQUIRED' }; // 通知弹窗当前仍是浏览模式，并引导用户在网页中确认。
 }
 
 function exitEditMode() {
@@ -103,9 +131,14 @@ chrome.runtime.onMessage.addListener(
   (message: MessageType, _sender, sendResponse: (response: ResponseType) => void) => {
     switch (message.type) {
       case 'TOGGLE_EDIT_MODE':
-        if (message.mode === 'edit') enterEditMode();
-        else exitEditMode();
-        sendResponse({ type: 'EDIT_MODE_STATUS', mode: currentMode });
+        if (message.mode === 'edit') { // 开启操作需要等待扩展存储中的授权状态检查完成。
+          enterEditMode().then(sendResponse).catch(() => { // 异步检查完成后返回真实状态，并捕获存储异常。
+            sendResponse({ type: 'ERROR', message: '无法读取隐私设置，请重试' }); // 存储失败时不启动编辑器，避免绕过授权。
+          }); // 结束异步授权检查处理。
+        } else { // 关闭操作不涉及数据授权，可以立即执行。
+          exitEditMode(); // 销毁编辑器并恢复网页原有布局和交互状态。
+          sendResponse({ type: 'EDIT_MODE_STATUS', mode: currentMode }); // 把关闭后的真实模式返回给调用方。
+        } // 完成开启与关闭两条消息分支。
         break;
 
       case 'GET_EDIT_MODE':

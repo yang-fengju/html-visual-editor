@@ -146,6 +146,10 @@ The extension uses Shadow DOM to isolate its UI from the host page. All editor U
 
 The `Engine` class orchestrates all editing modules. Each module handles a specific concern (text editing, style editing, drag & drop, etc.) and communicates through the shared `History` system for undo/redo support.
 
+## Privacy
+
+Website content, page URLs, page titles, and user-created notes are processed only on the user's device and are never uploaded to a developer server. See the [Privacy Policy](docs/privacy-policy.md) for details.
+
 ## Contributing
 
 Contributions are welcome! Please:

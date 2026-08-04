@@ -8,6 +8,8 @@ import 'prismjs/components/prism-json';
 import 'prismjs/components/prism-bash';
 import { History } from './History';
 
+Prism.manual = true; // 禁止 Prism 自动扫描宿主网页，仅在用户确认编辑代码块时执行本地语法高亮。
+
 const LANGUAGES = [
   { id: 'javascript', label: 'JavaScript' },
   { id: 'typescript', label: 'TypeScript' },

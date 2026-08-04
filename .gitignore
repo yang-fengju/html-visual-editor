@@ -7,3 +7,4 @@ dist/
 *.vsix
 *.crx
 *.pem
+release/

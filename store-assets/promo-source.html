@@ -1,0 +1,68 @@
+<!DOCTYPE html> <!-- 使用标准 HTML5 文档模式保证宣传图在 Chrome 中稳定渲染。 -->
+<html lang="zh-CN"> <!-- 声明页面语言，便于浏览器采用合适的文本与无障碍规则。 -->
+<head> <!-- 集中定义画布元数据和全部可复现样式。 -->
+  <meta charset="UTF-8"> <!-- 使用 UTF-8 编码避免说明文字或属性解析异常。 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- 固定按 CSS 像素渲染 440×280 画布。 -->
+  <title>HTML Visual Editor 商店宣传图</title> <!-- 为本地渲染页面提供可识别标题。 -->
+  <style> /* 所有图形均由确定性 CSS 和现有项目图标组成，不引入外部资源。 */
+    * { box-sizing: border-box; } /* 使用统一盒模型防止边框改变固定画布尺寸。 */
+    html, body { width: 440px; height: 280px; margin: 0; overflow: hidden; } /* 严格锁定 Chrome 商店小型宣传图要求的尺寸。 */
+    body { display: grid; place-items: center; background: #f3f4f6; font-family: sans-serif; } /* 以中性背景承托产品图形并保持视觉清晰。 */
+    .promo { position: relative; width: 440px; height: 280px; overflow: hidden; background: #f8fafc; } /* 建立固定尺寸且无圆角的最终位图画布。 */
+    .accent-blue { position: absolute; top: 0; left: 0; width: 126px; height: 8px; background: #2563eb; } /* 使用蓝色短边建立编辑器工具属性。 */
+    .accent-green { position: absolute; right: 0; bottom: 0; width: 92px; height: 8px; background: #22c55e; } /* 使用绿色短边呼应本地处理与批注状态。 */
+    .browser { position: absolute; left: 70px; top: 38px; width: 328px; height: 204px; overflow: hidden; border: 1px solid #cbd5e1; border-radius: 6px; background: #ffffff; box-shadow: 0 18px 34px rgba(15, 23, 42, 0.16); } /* 用真实工具比例构成主视觉浏览器窗口。 */
+    .browser-bar { display: flex; align-items: center; gap: 6px; width: 100%; height: 26px; padding: 0 10px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; } /* 模拟克制的浏览器顶部结构。 */
+    .browser-dot { width: 6px; height: 6px; border-radius: 50%; background: #94a3b8; } /* 使用小圆点建立熟悉的窗口语义。 */
+    .address { width: 178px; height: 7px; margin-left: 8px; border-radius: 2px; background: #e2e8f0; } /* 用无文字地址条避免宣传图出现无法本地化的文案。 */
+    .editor-bar { display: flex; align-items: center; gap: 7px; width: 100%; height: 28px; padding: 0 10px; border-bottom: 1px solid #dbeafe; background: #ffffff; } /* 表达产品核心的顶部编辑工具栏。 */
+    .tool { width: 13px; height: 13px; border: 1px solid #94a3b8; border-radius: 2px; background: #ffffff; } /* 使用稳定方形工具控件暗示格式命令。 */
+    .tool-wide { width: 31px; } /* 用较宽控件暗示字号或选项菜单。 */
+    .tool-active { border-color: #2563eb; background: #dbeafe; } /* 用蓝色状态表明当前编辑工具已启用。 */
+    .document { position: relative; width: 100%; height: 150px; padding: 20px 24px; background: #ffffff; } /* 创建干净的网页编辑内容区域。 */
+    .heading-line { width: 128px; height: 10px; margin-bottom: 13px; border-radius: 2px; background: #1f2937; } /* 使用粗深线条表达网页标题层级。 */
+    .text-line { width: 188px; height: 5px; margin-bottom: 8px; border-radius: 2px; background: #cbd5e1; } /* 使用中性短线表达正文内容。 */
+    .text-line-short { width: 142px; } /* 变化正文长度以形成自然的排版节奏。 */
+    .selection { position: absolute; left: 19px; top: 61px; width: 214px; height: 48px; border: 2px solid #2563eb; background: rgba(219, 234, 254, 0.26); } /* 用清晰选择框展示可视化编辑能力。 */
+    .selection-handle { position: absolute; right: -4px; bottom: -4px; width: 7px; height: 7px; border: 1px solid #ffffff; background: #2563eb; } /* 添加缩放手柄强化直接操作语义。 */
+    .note { position: absolute; right: 22px; top: 52px; width: 55px; height: 60px; padding: 8px; border-left: 3px solid #22c55e; background: #f0fdf4; box-shadow: 0 6px 14px rgba(15, 23, 42, 0.1); } /* 使用绿色便签表现本地批注功能。 */
+    .note-line { width: 32px; height: 4px; margin-bottom: 6px; border-radius: 1px; background: #86efac; } /* 用短线表达批注内容且避免加入宣传文字。 */
+    .logo { position: absolute; left: 24px; top: 82px; width: 92px; height: 92px; filter: drop-shadow(0 14px 18px rgba(15, 23, 42, 0.2)); } /* 放大现有扩展图标作为第一视觉品牌信号。 */
+    .cursor { position: absolute; left: 272px; top: 164px; width: 0; height: 0; border-top: 18px solid #111827; border-right: 10px solid transparent; transform: rotate(-18deg); filter: drop-shadow(0 2px 1px rgba(255, 255, 255, 0.9)); } /* 用简化指针暗示直接点击编辑。 */
+  </style> <!-- 完成宣传图全部视觉定义。 -->
+</head> <!-- 结束文档头部。 -->
+<body> <!-- 渲染严格固定尺寸的宣传图主体。 -->
+  <main class="promo" aria-label="HTML Visual Editor 商店宣传图"> <!-- 用语义主区域承载完整品牌画面。 -->
+    <div class="accent-blue"></div> <!-- 渲染顶部蓝色品牌短边。 -->
+    <div class="accent-green"></div> <!-- 渲染底部绿色功能短边。 -->
+    <section class="browser" aria-hidden="true"> <!-- 绘制不需要辅助技术逐项读取的编辑器场景。 -->
+      <div class="browser-bar"> <!-- 绘制浏览器窗口顶部区域。 -->
+        <span class="browser-dot"></span> <!-- 绘制第一个窗口状态点。 -->
+        <span class="browser-dot"></span> <!-- 绘制第二个窗口状态点。 -->
+        <span class="browser-dot"></span> <!-- 绘制第三个窗口状态点。 -->
+        <span class="address"></span> <!-- 绘制无文字地址条。 -->
+      </div> <!-- 完成浏览器顶部区域。 -->
+      <div class="editor-bar"> <!-- 绘制核心编辑工具栏。 -->
+        <span class="tool tool-active"></span> <!-- 绘制激活的编辑命令。 -->
+        <span class="tool"></span> <!-- 绘制普通格式命令。 -->
+        <span class="tool"></span> <!-- 绘制普通格式命令。 -->
+        <span class="tool tool-wide"></span> <!-- 绘制较宽的选项控件。 -->
+        <span class="tool"></span> <!-- 绘制颜色或样式命令。 -->
+      </div> <!-- 完成编辑工具栏。 -->
+      <div class="document"> <!-- 绘制正在编辑的网页内容区域。 -->
+        <div class="heading-line"></div> <!-- 绘制网页标题行。 -->
+        <div class="text-line"></div> <!-- 绘制第一行正文。 -->
+        <div class="text-line text-line-short"></div> <!-- 绘制较短的第二行正文。 -->
+        <div class="selection"><span class="selection-handle"></span></div> <!-- 绘制元素选择框和缩放手柄。 -->
+        <aside class="note"> <!-- 绘制本地批注提示块。 -->
+          <div class="note-line"></div> <!-- 绘制批注第一行。 -->
+          <div class="note-line"></div> <!-- 绘制批注第二行。 -->
+          <div class="note-line"></div> <!-- 绘制批注第三行。 -->
+        </aside> <!-- 完成批注提示块。 -->
+      </div> <!-- 完成网页内容区域。 -->
+    </section> <!-- 完成编辑器场景。 -->
+    <img class="logo" src="/icons/icon128.png" alt="HTML Visual Editor 图标"> <!-- 复用项目现有图标，确保宣传图与安装图标一致。 -->
+    <span class="cursor" aria-hidden="true"></span> <!-- 绘制指向选中元素的操作光标。 -->
+  </main> <!-- 完成宣传图主画布。 -->
+</body> <!-- 结束页面可见内容。 -->
+</html> <!-- 结束 HTML 文档。 -->

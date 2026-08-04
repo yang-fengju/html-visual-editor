@@ -9,6 +9,7 @@ export type MessageType =
 
 export type ResponseType =
   | { type: 'EDIT_MODE_STATUS'; mode: EditorMode }
+  | { type: 'CONSENT_REQUIRED' }
   | { type: 'HTML_CONTENT'; html: string; title: string }
   | { type: 'COPY_SUCCESS' }
   | { type: 'ERROR'; message: string };
