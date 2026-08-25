@@ -1,3 +1,5 @@
+
+
 # HTML Visual Editor
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -53,7 +55,7 @@ npm run build
 
 ## Usage
 
-1. Click the extension icon or press **Alt+E** to toggle edit mode
+1. Click the extension icon or press **Alt+E** to toggle edit mode (on first use, accept the on-page data consent before edit mode starts)
 2. **Click** any element to select it (blue outline appears)
 3. **Double-click** text to edit it inline
 4. **Right-click** for context menu with more actions (copy, delete, move, add comment)
